@@ -403,8 +403,14 @@
               <div class="hint" id="cSrcH"></div>
             </div>
             <div id="cBuy">
+              <div class="row2">
+                <div class="field"><label>② 고객사 업종</label><input type="text" id="cBiz" list="bizList" placeholder="예: 문구 도소매, IT 서비스, 한식 음식점">
+                  <datalist id="bizList"><option value="도소매 (상품 판매)"><option value="온라인 쇼핑몰·구매대행"><option value="음식점·카페"><option value="제조업"><option value="서비스업 (IT·컨설팅·교육 등)"><option value="병·의원"></datalist>
+                  <div class="hint" id="cBizH"></div></div>
+                <div class="field" id="cGoodsF"><label>상품 계정코드</label><input type="text" id="cGoods" inputmode="numeric" placeholder="146"><div class="hint">구매대행상품 등 따로 쓰면 그 코드 (예: 173)</div></div>
+              </div>
               <div class="field">
-                <label>② 고객사 유형</label>
+                <label>과세 유형</label>
                 <div class="seg" id="cProf">
                   <button data-p="과세" class="on">과세</button><button data-p="겸영">겸영</button><button data-p="면세">면세</button>
                 </div>
@@ -439,7 +445,7 @@
       </div>
     </div>
 
-    <footer>신고기한·절차는 일반적인 기준입니다. 기한이 주말·공휴일이면 다음 영업일로 연장되며, 사이트 메뉴 이름은 개편으로 바뀔 수 있습니다. 내용 수정은 구글 시트에서 합니다. · 화면 버전 2026-11-24d (적요: 신용카드매입·현금영수증 매입·공통매입세액)</footer>
+    <footer>신고기한·절차는 일반적인 기준입니다. 기한이 주말·공휴일이면 다음 영업일로 연장되며, 사이트 메뉴 이름은 개편으로 바뀔 수 있습니다. 내용 수정은 구글 시트에서 합니다. · 화면 버전 2026-11-24e (고객사 업종 입력)</footer>
   </main>
 </div>
 
@@ -948,7 +954,7 @@ const CARD = (() => {
     ["식비", K("음식","식당","카페","커피","제과","베이커리","파리바게뜨","뚜레쥬르","떡","분식","김밥","치킨","피자","버거","롯데리아","맥도날드","도시락","편의점","씨유","CU","세븐일레븐","지에스25|GS25|GS\\)25|지에스\\(GS","이마트24","우동","국수","음숙","코리아세븐","비지에프","이마트에브리데이","놋그릇","찌개","반점","돈까스","샤브","만두","라면","배스킨","투썸","이디야","스타벅스","메가MGC|메가엠지씨","땅콩빵","해장국","우아한형제들","배달","롯데지알에스","슈퍼마켓","더프레시","마트$|마트 ","아웃백","스테이크"), 811],
     ["온라인·상품", K("토스페이먼츠","스마일페이","네이버파이낸셜","엔에이치엔케이씨피","KCP","이니시스","케이지","십일번가","11번가","쿠팡","홈쇼핑","이마트","다이소","아성","롯데쇼핑","스타필드","백화점","씨제이이엔엠","스마트로","한국정보통신","나이스정보통신","케이에스넷","코페이","카카오페이","섹타나인","전자지급","결제대행","국군복지단","모닝글로리","도소매|도매|소매"), 173],
   ];
-  const ACCT = {811:"복리후생비",812:"여비교통비",813:"접대비",814:"통신비",817:"세금과공과",821:"보험료",822:"차량유지비",830:"소모품비",134:"가지급금",137:"(입증 필요)",173:"상품"};
+  const ACCT = {146:"상품",153:"원재료",212:"비품",811:"복리후생비",812:"여비교통비",813:"접대비",814:"통신비",817:"세금과공과",821:"보험료",822:"차량유지비",830:"소모품비",134:"가지급금",137:"(입증 필요)",173:"상품"};
   const s = x => x == null ? "" : String(x);
   const num = x => { if (x == null || x === "") return 0; if (typeof x === "number") return x; const v = parseFloat(String(x).replace(/[,\s원]/g, "")); return isNaN(v) ? 0 : v; };
   const bn = x => s(x).replace(/\D/g, "");
@@ -962,15 +968,42 @@ const CARD = (() => {
             map: { 승인일자: "매입일시", 가맹점명: "상호", 가맹점사업자번호: "사업자번호", 가맹점유형: "유형", 업태: "업태", 업종: "업종" } },
   };
 
-  function classify(r, profile, kind) {
-    const item0 = (KIND[kind] || KIND.card).item;
+  /* 고객사 업종 → 매입 성격 판단 (상품 / 원재료 / 소모품비) */
+  const FOOD_IN = K("식자재","식재료","정육","축산","농산","수산","청과","야채","채소","식품","하나로마트","농협","코스트코","트레이더스","슈퍼마켓","더프레시","이마트에브리데이","마트$|마트 ","과실","육류","수산물");
+  function bizType(t) {
+    t = s(t);
+    if (/의원|병원|치과|한의|약국|의료/.test(t)) return "의료";
+    if (/음식|식당|카페|주점|베이커리|제과|치킨|분식|레스토랑|요식/.test(t)) return "음식점";
+    if (/제조|공장|생산|가공/.test(t)) return "제조";
+    if (!t.trim() || /도매|소매|판매|쇼핑몰|유통|상점|문구|마트|무역|구매대행|스토어|오픈마켓/.test(t)) return "도소매";
+    return "서비스";
+  }
+  function bizInfo(biz) {
+    const b = biz || {}, type = b.type || bizType(b.text);
+    return { type, goods: parseInt(b.goods) || 146, text: s(b.text) };
+  }
+  // 온라인·쇼핑·도매 등에서 산 물건의 계정
+  function buyAcct(B, cat) {
+    if (cat === "식자재") return 153;
+    if (B.type === "도소매") return B.goods;
+    if (B.type === "제조") return 153;
+    return 830;
+  }
+  const BUYNAME = { "도소매": "상품", "제조": "원재료", "음식점": "소모품비", "서비스": "소모품비", "의료": "소모품비" };
+
+  function classify(r, profile, kind, biz) {
+    const item0 = (KIND[kind] || KIND.card).item, B = bizInfo(biz);
     const name = s(r["가맹점명"]), ty = s(r["가맹점유형"]), text = `${name} ${s(r["업태"])} ${s(r["업종"])}`;
     const total = num(r["합계"]), tax = num(r["세액"]);
     let cat = "기타", acct = null, flag = "";
     for (const [c, pat, a] of CAT) { if (pat.test(text)) { cat = c; acct = a; break; } }
+    if (B.type === "음식점" && ["식비", "온라인·상품", "기타"].includes(cat) && FOOD_IN.test(text) && !/음식|휴게|주점|접객/.test(text)) { cat = "식자재"; acct = 153; }
     if (cat === "온라인·상품" && Math.abs(total) > 0 && Math.abs(total) <= 1000 && /카카오페이|카드|페이/.test(name)) { cat = "금융수수료"; acct = 134; }
+    const buy = ["온라인·상품", "운반", "식자재"].includes(cat);
+    if (buy) acct = buyAcct(B, cat);
+    const bn_ = cat === "식자재" ? "원재료" : BUYNAME[B.type];
     if (profile === "면세") {
-      if (cat === "온라인·상품" || cat === "운반") acct = 830;
+      if (buy && cat !== "식자재") acct = 830;
       if (cat === "기타") { acct = 830; flag = "계정 확인"; }
       const reason = {"교통":"여객운송 등 불공제","보험":"보험료는 면세 → 불공제","금융수수료":"금융·수수료(면세)","의료":"의료·가사 관련","개인생활":"업무무관(가사경비 예상)","차량구입":"승용차 관련"}[cat] || "면세사업자 매입세액 불공제";
       return ["불공제", acct, "", reason, flag];
@@ -982,17 +1015,23 @@ const CARD = (() => {
     if (cat === "의료") return ["불공제", 134, "", "병원·약국: 업무무관(가사경비) → 가지급금", ""];
     if (cat === "개인생활") return ["불공제", 134, "", "개인 용도(가사경비) → 가지급금", ""];
     if (cat === "차량구입") return ["불공제", 134, "", "승용차 구입·유지(비영업용 소형승용차 불공제)", "차종 확인"];
-    if (ty.startsWith("간이")) return ["불공제", [811,173].includes(acct) ? acct : 134, "", "간이과세자 영수증분 → 불공제", ""];
-    if (ty.startsWith("면세") || (tax === 0 && total !== 0)) return ["불공제", [811,173,812].includes(acct) ? acct : 134, "", "면세사업자·세액 0 → 불공제", ""];
+    if (ty.startsWith("간이")) return ["불공제", (buy || acct === 811) ? acct : 134, "", "간이과세자 영수증분 → 불공제", ""];
+    if (ty.startsWith("면세") || (tax === 0 && total !== 0)) {
+      if (cat === "식자재") return ["불공제", 153, "", "면세 식자재 → 원재료 (불공제)", "의제매입세액공제 대상인지 확인"];
+      return ["불공제", (buy || [811, 812].includes(acct)) ? acct : 134, "", "면세사업자·세액 0 → 불공제", ""];
+    }
     const common = profile === "겸영" ? "공통매입세액" : "";
     if (cat === "차량유지") return ["공제", 822, common, "주유·차량 → 차량유지비" + (common ? " (공통매입)" : ""), "차종 확인(승용차면 불공제)"];
     if (cat === "식비") return ["공제", 811, common, "식대·간식 → 복리후생비" + (common ? " (공통매입)" : ""), ""];
-    if (cat === "운반") return ["공제", 173, item0, "택배·배송 → 상품", ""];
+    if (cat === "식자재") return ["공제", 153, item0, "음식점 식자재 → 원재료", ""];
+    if (cat === "운반") return ["공제", acct, item0, `택배·배송 → ${bn_}`, ""];
     if (cat === "온라인·상품") {
-      if (Math.abs(total) >= 1000000) return ["불공제", 137, "", "세액이 커서 구체적 입증 필요", "증빙 확인"];
-      return ["공제", 173, item0, "온라인·도소매 구입 → 상품", ""];
+      if (B.type === "도소매" && Math.abs(total) >= 1000000) return ["불공제", 137, "", "세액이 커서 구체적 입증 필요", "증빙 확인"];
+      if (B.type === "서비스" && Math.abs(total) >= 1000000) return ["공제", 212, item0, "고액 물품 → 비품(자산)", "자산(비품)인지 확인"];
+      return ["공제", acct, item0, `온라인·도소매 구입 → ${bn_} (${B.type})`, ""];
     }
-    return ["공제", 173, item0, "업종 불명 → 상품으로 추정", "업종 확인"];
+    if (B.type === "도소매") return ["공제", B.goods, item0, "업종 불명 → 상품으로 추정", "업종 확인"];
+    return ["공제", 830, item0, `업종 불명 → 소모품비로 추정 (${B.type})`, "업종 확인"];
   }
 
   /* ---------- 엑셀 읽기 ---------- */
@@ -1054,6 +1093,14 @@ const CARD = (() => {
     const orig = t.hdr.filter(h => !/^c\d+$/.test(h) && !h.includes(":") && !drop.has(h));
     const mem = histBooks && histBooks.length ? learnAoa(histBooks, kind) : {};
     const big = opts.big || 300000;
+    let goods = parseInt(opts.goods) || 0, goodsLearned = false;
+    if (!goods) {  // 상품 계정을 안 넣었으면 지난 처리 파일에서 가장 많이 쓴 매입 계정
+      const c = {};
+      Object.values(mem).forEach(([d, a, it]) => { if (d === "공제" && it && !it.includes("공통") && ![811,812,813,814,817,821,822,830,212].includes(a)) c[a] = (c[a] || 0) + 1; });
+      const top = Object.entries(c).sort((x, y) => y[1] - x[1])[0];
+      if (top) { goods = +top[0]; goodsLearned = true; }
+    }
+    const biz = bizInfo({ text: opts.biz, goods });
     const res = [];
     for (const raw of t.rows) {
       const r = { ...raw };
@@ -1065,16 +1112,16 @@ const CARD = (() => {
       let d, acct, item, why, flag;
       const m = mem[bn(r["가맹점사업자번호"])];
       if (m) { [d, acct, item] = m; why = "지난 처리 기준(같은 가맹점)"; flag = ""; }
-      else [d, acct, item, why, flag] = classify(r, opts.profile, kind);
+      else [d, acct, item, why, flag] = classify(r, opts.profile, kind, biz);
       const amt = Math.abs(r["합계"]);
-      const isBig = amt >= 1000000 || (amt >= big && acct !== 173);
+      const isBig = amt >= 1000000 || (amt >= big && !(biz.type === "도소매" && acct === biz.goods));
       if (isBig) flag = "고액 검토" + (flag ? " · " + flag : "");
       const nm = ACCT[acct] || "";
       const reason = (nm && why.includes(nm.slice(0, 2))) ? why : [nm, why].filter(Boolean).join(" · ");
       res.push({ r, d, type: d === "공제" ? K0.type : null, acct, nm, item, why, reason, flag, big: isBig });
     }
     if (!res.length) throw new Error("분류할 거래가 없어요. 파일 내용을 확인해 주세요.");
-    return { kind, orig, res, learned: Object.keys(mem).length };
+    return { kind, orig, res, learned: Object.keys(mem).length, biz, goodsLearned };
   }
 
   function buySheets(out) {
@@ -1271,7 +1318,7 @@ const CARD = (() => {
     const label = out.kind === "etc" ? "기타소득" : KIND[out.kind].file;
     return writeBook(out.kind === "etc" ? etcSheets(out) : buySheets(out), `1차검토_${label}${name ? "_" + name : ""}.xlsx`);
   }
-  return { classify, run, download, runAoa, etcAoa, buySheets, etcSheets, ACCT, KIND };
+  return { classify, bizType, run, download, runAoa, etcAoa, buySheets, etcSheets, ACCT, KIND };
 })();
 
 /* ---------- 카드 분류 화면 ---------- */
@@ -1312,16 +1359,24 @@ function cardLibs(){
   ["dragenter","dragover"].forEach(ev=>$("cDrop").addEventListener(ev,e=>{e.preventDefault();$("cDrop").classList.add("on");}));
   ["dragleave","drop"].forEach(ev=>$("cDrop").addEventListener(ev,e=>{e.preventDefault();$("cDrop").classList.remove("on");}));
   $("cDrop").addEventListener("drop",e=>{ const f=e.dataTransfer.files[0]; if(f) setFile(f); });
-  $("cProf").addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b) return; prof=b.dataset.p; $("cProf").querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b)); });
+  const setProf=p=>{ prof=p; $("cProf").querySelectorAll("button").forEach(x=>x.classList.toggle("on",x.dataset.p===p)); };
+  $("cProf").addEventListener("click",e=>{ const b=e.target.closest("button"); if(b) setProf(b.dataset.p); });
+  const BIZTXT={"도소매":"→ 온라인·도매 구입은 상품(상품 계정)으로","제조":"→ 재료 구입은 원재료(153)로","음식점":"→ 마트·식자재는 원재료(153), 면세 식자재는 의제매입 확인 표시, 그 외 물품은 소모품비(830)","서비스":"→ 물품 구입은 소모품비(830), 100만원 이상은 비품(212) 확인","의료":"→ 면세: 전부 불공제, 물품은 소모품비(830)"};
+  const bizHint=()=>{ const t=$("cBiz").value.trim(), ty=CARD.bizType(t); $("cBizH").textContent=(t?`'${ty}' 업종으로 봄 `:"비우면 도소매로 봄 ")+BIZTXT[ty]; $("cGoodsF").classList.toggle("hidden",ty!=="도소매"); return ty; };
+  $("cBiz").addEventListener("input",()=>{ if(bizHint()==="의료") setProf("면세"); });
+  // 업체별로 업종·과세유형·상품계정 기억 (이 브라우저에만 저장)
+  const CO=()=>{ try{ return JSON.parse(localStorage.getItem("cardCo")||"{}"); }catch(e){ return {}; } };
+  $("cName").addEventListener("change",()=>{ const c=CO()[$("cName").value.trim()]; if(!c) return; $("cBiz").value=c.biz||""; $("cGoods").value=c.goods||""; if(c.prof) setProf(c.prof); bizHint(); });
+  const saveCo=()=>{ const n=$("cName").value.trim(); if(!n||kind==="etc") return; try{ const all=CO(); all[n]={biz:$("cBiz").value.trim(),goods:$("cGoods").value.trim(),prof}; localStorage.setItem("cardCo",JSON.stringify(all)); }catch(e){} };
   $("cBig").addEventListener("input",e=>{ const v=e.target.value.replace(/[^0-9]/g,""); e.target.value=v?Number(v).toLocaleString("ko-KR"):""; });
   const fmt=v=>Math.round(v).toLocaleString("ko-KR");
   const opts=()=>({kind, profile:prof, name:$("cName").value.trim(), big:parseInt(($("cBig").value||"0").replace(/,/g,""))||(kind==="etc"?3000000:300000), history:[...$("cHist").files],
-    code:$("eCode").value.trim(), expRate:parseFloat($("eExp").value), attr:$("eAttr").value, payDate:$("ePay").value});
+    biz:$("cBiz").value.trim(), goods:$("cGoods").value.trim(), code:$("eCode").value.trim(), expRate:parseFloat($("eExp").value), attr:$("eAttr").value, payDate:$("ePay").value});
   $("cRun").addEventListener("click",async()=>{
     $("cErr").innerHTML=""; $("cRun").disabled=true; $("cRun").textContent="검토 중…";
     try{
       await cardLibs(); if(!window.XLSX) throw new Error("엑셀 읽기 도구를 불러오지 못했어요. 인터넷 연결을 확인해 주세요.");
-      const o=opts(); last={out:await CARD.run(file,o), o}; last.out.kind==="etc" ? renderEtc(last) : renderBuy(last);
+      const o=opts(); saveCo(); last={out:await CARD.run(file,o), o}; last.out.kind==="etc" ? renderEtc(last) : renderBuy(last);
     }catch(err){ $("cErr").innerHTML=`<div class="cerr">${esc(err.message||err)}</div>`; }
     finally{ $("cRun").disabled=!file; $("cRun").textContent="1차 검토 실행"; }
   });
@@ -1339,6 +1394,7 @@ function cardLibs(){
         <div class="kpi red"><span>고액 검토</span><b>${big}</b></div>
         <div class="kpi yel"><span>확인 필요</span><b>${chk}</b></div>
       </div>${learnTxt(out.learned)}
+      <div class="hint" style="margin:-6px 0 12px">고객사 업종: ${esc(out.biz.type)}${out.biz.type==="도소매"?` · 상품 계정 ${out.biz.goods}${out.goodsLearned?" (지난 처리 파일에서 학습)":""}`:""} · ${esc(prof)}</div>
       <div class="panel"><div class="panel-h">검토 필요 <span class="n">${rv.length}</span><span style="margin-left:auto"><button class="dlbtn" id="cDl">⬇ 1차검토 엑셀 받기</button></span></div>
         <div class="cscroll" style="max-height:380px"><table class="ctbl"><thead><tr><th>구분</th><th>${dl}</th><th>가맹점명</th><th>합계</th><th>판단</th><th>계정</th><th>확인할 것</th></tr></thead><tbody>
         ${rv.map(x=>row(x,`<td>${x.big?"고액":"확인"}</td><td>${esc(x.r["승인일자"])}</td><td>${esc(x.r["가맹점명"])}</td><td class="n">${fmt(x.r["합계"])}</td><td>${x.d}</td><td>${x.acct} ${esc(x.nm)}</td><td>${esc(x.flag)}</td>`)).join("")||'<tr><td colspan="7" class="cmsg">검토할 건이 없어요.</td></tr>'}
@@ -1372,7 +1428,7 @@ function cardLibs(){
         </tbody></table></div></div>`;
     dlBind();
   }
-  setKind("card");
+  setKind("card"); bizHint();
 })();
 
 /* ---------- 구글 시트 불러오기 ---------- */
