@@ -249,6 +249,21 @@
   .cerr{color:var(--red);background:var(--red-soft);border-radius:8px;padding:10px 12px;font-size:13px;margin-top:10px}
   .cmsg{color:var(--mute);padding:40px 0;text-align:center}
   .kseg{max-width:640px;margin-bottom:16px}
+  .egrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px 14px}
+  .egrid .field{margin-bottom:8px}
+  .echk{display:flex;align-items:center;gap:6px;font-size:13px;grid-column:span 2;padding:4px 0}
+  .esel,.emp .field input,.emp .field select{font-size:13.5px!important;padding:8px 10px!important}
+  .ebtn{border:1px solid var(--line);background:var(--panel);color:var(--ink);font:600 12.5px inherit;padding:6px 11px;border-radius:6px;cursor:pointer;white-space:nowrap}
+  .ebtn:hover{border-color:#c9d7fb;color:var(--accent)} .ebtn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+  .ebtn.x{padding:3px 8px;color:var(--mute)}
+  .etbl input,.etbl select{font:13px inherit;padding:5px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel)}
+  .etbl td{vertical-align:middle;padding:6px 6px}
+  .etbl select{max-width:132px}
+  .etag{display:inline-block;font-size:11.5px;font-weight:600;padding:1px 7px;border-radius:5px;background:var(--gray-soft);color:#3b4559;margin:1px 3px 1px 0}
+  .etag.y{background:var(--ok-soft);color:var(--ok)} .etag.ex{background:var(--red-soft);color:var(--red)}
+  .eold{display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) auto;gap:4px 10px;border-top:1px dashed var(--line);padding-top:8px}
+  #eYears input{font:13px inherit;padding:5px 6px;border:1px solid var(--line);border-radius:6px}
+  @media (max-width:900px){ .egrid,.eold{grid-template-columns:1fr 1fr} }
   .kseg button{font-size:14px;padding:10px 6px}
   @media (max-width:900px){ .cardwrap{grid-template-columns:1fr} .kpis{grid-template-columns:repeat(2,1fr)} }
   footer{margin-top:30px;color:var(--mute);font-size:12px;border-top:1px solid var(--line);padding-top:14px}
@@ -388,6 +403,8 @@
       </div>
     </div>
 
+    <div id="empBox" class="hidden"><div class="cmsg">불러오는 중…</div></div>
+
     <div id="cardBox" class="hidden">
       <div class="seg kseg" id="cKind">
         <button data-k="card" class="on">💳 신용카드 매입</button><button data-k="cash">🧾 현금영수증 매입</button><button data-k="etc">👥 기타소득 (대량)</button>
@@ -445,7 +462,7 @@
       </div>
     </div>
 
-    <footer>신고기한·절차는 일반적인 기준입니다. 기한이 주말·공휴일이면 다음 영업일로 연장되며, 사이트 메뉴 이름은 개편으로 바뀔 수 있습니다. 내용 수정은 구글 시트에서 합니다. · 화면 버전 2026-11-24f (소모품비·수수료비용 폭넓게)</footer>
+    <footer>신고기한·절차는 일반적인 기준입니다. 기한이 주말·공휴일이면 다음 영업일로 연장되며, 사이트 메뉴 이름은 개편으로 바뀔 수 있습니다. 내용 수정은 구글 시트에서 합니다. · 화면 버전 2026-11-24g (통합고용세액공제 계산기)</footer>
   </main>
 </div>
 
@@ -519,6 +536,7 @@ const ICONS = {
   samu:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>',
   docs:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>',
   card:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/></svg>',
+  emp:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3 2.8-4.8 5.5-4.8s4.9 1.8 5.5 4.8"/><path d="M17 8v6M14 11h6"/></svg>',
   calc:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 12h.01M12 12h.01M16 12h.01M8 16h.01M12 16h.01M16 16h.01"/></svg>',
   folder:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>'
 };
@@ -528,6 +546,7 @@ let MENU = [
   {id:"samu",  label:"세무사랑",         type:"procs", ic:"samu",  desc:"세무사랑 Pro 기장·신고 절차와 메뉴 경로, 계정코드", ph:"세무사랑 검색 (예: 취득신고, 기타소득, 매입, 254)"},
   {id:"docs",  label:"서식·서류",        type:"docs",  ic:"docs",  desc:"업무별 필요 서류와 서식 받는 곳", ph:"서류 검색 (예: 사업자등록, 정정, 상실신고)"},
   {id:"card",  label:"자료 1차 검토",    type:"card",  ic:"card",  desc:"신용카드·현금영수증 매입 분류와 기타소득 명단을 세무사랑 붙여넣기용으로 정리"},
+  {id:"emp",   label:"통합고용세액공제", type:"emp",   ic:"emp",   desc:"근로자 인적사항으로 상시근로자 수·청년등 판정과 공제액 자동 계산 (2026년 개정 조특법 제29조의8)"},
   {id:"calc",  label:"급여 계산기",      type:"calc",  ic:"calc",  desc:"근로·사업·기타소득 세후 ↔ 세전 역산 (2026년 기준)"}
 ];
 const DATA = {};
@@ -590,9 +609,11 @@ function renderControls(){
   document.getElementById("title").textContent = m.label;
   document.getElementById("subtitle").textContent = m.desc || "";
   document.getElementById("q").placeholder = m.ph || `${m.label} 검색`;
-  const isCalc = m.type==="calc", isCard = m.type==="card";
-  document.getElementById("searchBox").classList.toggle("hidden", isCalc||isCard);
-  document.getElementById("list").classList.toggle("hidden", isCalc||isCard);
+  const isCalc = m.type==="calc", isCard = m.type==="card", isEmp = m.type==="emp";
+  document.getElementById("searchBox").classList.toggle("hidden", isCalc||isCard||isEmp);
+  document.getElementById("list").classList.toggle("hidden", isCalc||isCard||isEmp);
+  document.getElementById("empBox").classList.toggle("hidden", !isEmp);
+  if(isEmp) empLoad();
   document.getElementById("calcBox").classList.toggle("hidden", !isCalc);
   document.getElementById("cardBox").classList.toggle("hidden", !isCard);
   if(isCard) cardLibs();
@@ -1326,6 +1347,14 @@ const CARD = (() => {
   }
   return { classify, bizType, run, download, runAoa, etcAoa, buySheets, etcSheets, ACCT, KIND };
 })();
+
+/* ---------- 통합고용세액공제 화면 (emp.js) ---------- */
+let empP=null;
+function empLoad(){
+  if(!empP) empP=loadScript("emp.js?v=2026-11-24g").then(()=>EMPUI.mount(document.getElementById("empBox")))
+    .catch(()=>{ empP=null; document.getElementById("empBox").innerHTML='<div class="cerr">계산기 파일을 불러오지 못했어요. 새로고침해 주세요.</div>'; });
+  return empP;
+}
 
 /* ---------- 카드 분류 화면 ---------- */
 let cardLibP=null;
