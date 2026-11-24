@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Cache-Control" content="no-cache">
+<title>세무 업무 포털</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+  :root{
+    --side:#0d1830; --side2:#18284a; --side-ink:#c8d1e4; --side-mute:#7b89aa; --gold:#c49a3c;
+    --bg:#f2f4f8; --panel:#fff; --ink:#131a2b; --mute:#5c6780; --line:#e1e6ee; --line2:#edf0f5; --head:#f8f9fc;
+    --accent:#1d4ed8; --accent-soft:#ebf1fe; --ok:#0f7b5f; --ok-soft:#e3f4ed;
+    --warn:#975a00; --warn-soft:#fdf3e2; --red:#b42318; --red-soft:#fdecea; --gray-soft:#f1f3f7;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{font-family:Pretendard,"Noto Sans KR",system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5;font-size:14px;-webkit-font-smoothing:antialiased}
+  a{color:inherit}
+  .hidden{display:none!important}
+  .app{display:grid;grid-template-columns:244px minmax(0,1fr);min-height:100vh}
+
+  /* ── 사이드바 ── */
+  .side{background:var(--side);color:var(--side-ink);position:sticky;top:0;height:100vh;display:flex;flex-direction:column;padding:22px 14px 16px;overflow-y:auto}
+  .brand{display:flex;align-items:center;gap:11px;padding:0 8px 22px;border-bottom:1px solid rgba(255,255,255,.07);margin-bottom:16px}
+  .brand .mk{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,var(--gold),#8c6a22);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:15px;letter-spacing:-.04em}
+  .brand b{display:block;color:#fff;font-size:15px;letter-spacing:-.02em}
+  .brand small{display:block;color:var(--side-mute);font-size:11px;letter-spacing:.06em}
+  .nav-label{font-size:11px;color:var(--side-mute);letter-spacing:.08em;padding:0 10px 8px}
+  .nav{display:flex;flex-direction:column;gap:2px}
+  .nav-i{display:flex;align-items:center;gap:11px;width:100%;border:none;background:none;color:var(--side-ink);padding:9px 12px;border-radius:8px;font:500 14px/1.3 inherit;cursor:pointer;text-align:left}
+  .nav-i svg{width:18px;height:18px;flex:none;opacity:.8}
+  .nav-i .ic-emoji{width:18px;text-align:center;flex:none}
+  .nav-i em{margin-left:auto;font-style:normal;font-size:11px;color:var(--side-mute);background:rgba(255,255,255,.06);padding:1px 7px;border-radius:999px}
+  .nav-i:hover{background:rgba(255,255,255,.05);color:#fff}
+  .nav-i.on{background:var(--side2);color:#fff;box-shadow:inset 3px 0 0 var(--gold)}
+  .nav-i.on svg{opacity:1}
+  .side-box{margin-top:auto;padding:14px 10px 0;border-top:1px solid rgba(255,255,255,.07)}
+  .side-box h5{margin:0 0 8px;font-size:12px;color:#fff;font-weight:600;display:flex;justify-content:space-between}
+  .side-box h5 span{color:var(--side-mute);font-weight:400}
+  .side-box ul{margin:0;padding:0;list-style:none;font-size:12.5px}
+  .side-box li{padding:5px 0 5px 12px;position:relative;color:var(--side-ink)}
+  .side-box li::before{content:"";position:absolute;left:0;top:12px;width:5px;height:5px;border-radius:50%;background:var(--gold)}
+  .sync{margin-top:14px;font-size:11.5px;color:var(--side-mute)}
+
+  /* ── 본문 ── */
+  .main{padding:26px 34px 48px;min-width:0}
+  .top{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;padding-bottom:18px;border-bottom:1px solid var(--line);margin-bottom:18px}
+  .crumb{font-size:12px;color:var(--mute);margin-bottom:4px}
+  .crumb b{color:var(--ink);font-weight:600}
+  .top h1{margin:0;font-size:23px;font-weight:700;letter-spacing:-.025em}
+  .top p{margin:3px 0 0;color:var(--mute);font-size:13px}
+  .search{position:relative;width:360px;flex:none}
+  .search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--mute)}
+  .search input{width:100%;padding:10px 40px 10px 37px;font:14px inherit;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink)}
+  .search input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  .search kbd{position:absolute;right:10px;top:50%;transform:translateY(-50%);font:11px inherit;color:var(--mute);border:1px solid var(--line);border-radius:4px;padding:1px 6px;background:var(--head)}
+  .subtabs{display:flex;gap:4px;flex-wrap:wrap;margin:-4px 0 16px}
+  .subtab{border:1px solid var(--line);background:var(--panel);color:var(--mute);padding:6px 13px;border-radius:7px;font:500 13px inherit;cursor:pointer}
+  .subtab:hover{color:var(--ink)}
+  .subtab.on{background:var(--ink);border-color:var(--ink);color:#fff}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;margin-bottom:16px;overflow:hidden;box-shadow:0 1px 2px rgba(16,24,40,.04)}
+  .panel-h{display:flex;align-items:center;gap:8px;padding:11px 18px;border-bottom:1px solid var(--line);background:var(--head);font-weight:700;font-size:13.5px}
+  .panel-h .n{font-size:11.5px;font-weight:500;color:var(--mute);background:var(--panel);border:1px solid var(--line);padding:0 7px;border-radius:999px}
+  .empty{color:var(--mute);padding:40px 0;text-align:center}
+
+  /* 표 */
+  table.tbl{width:100%;border-collapse:collapse;font-size:13.5px}
+  .tbl th{font-size:11.5px;color:var(--mute);font-weight:600;text-align:left;padding:8px 18px;border-bottom:1px solid var(--line);background:var(--panel)}
+  .tbl td{padding:12px 18px;border-top:1px solid var(--line2);vertical-align:top}
+  .tbl tr:first-child td{border-top:none}
+  .tbl tbody tr:hover td{background:#f7f9fe}
+  .c-star{width:34px;padding-right:0!important}
+  .c-name{width:230px}
+  .c-name a{font-weight:600;text-decoration:none}
+  .c-name a:hover{color:var(--accent)}
+  .surl{font-size:12px;color:var(--mute);margin-top:1px;word-break:break-all}
+  .c-desc{color:#3b4559}
+  .c-tags{width:210px}
+  .c-act{width:92px;text-align:right}
+  .tag{display:inline-block;font-size:11.5px;color:var(--mute);background:var(--gray-soft);padding:1px 7px;border-radius:5px;margin:0 3px 3px 0}
+  .star{border:none;background:none;cursor:pointer;color:#cdd3de;font-size:16px;padding:0;line-height:1}
+  .star.on{color:var(--gold)}
+  .btn-open{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:600;color:var(--accent);text-decoration:none;border:1px solid var(--line);padding:5px 11px;border-radius:6px;white-space:nowrap;background:var(--panel)}
+  .btn-open:hover{background:var(--accent-soft);border-color:#c9d7fb}
+  .btn-open.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn-open.pri:hover{background:#1a43bd}
+
+  /* 목록-상세 */
+  .md{display:grid;grid-template-columns:310px minmax(0,1fr);gap:16px;align-items:start}
+  .mlist{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow-y:auto}
+  .mitem{display:block;width:100%;text-align:left;border:none;background:none;padding:12px 18px;border-top:1px solid var(--line2);cursor:pointer;font:inherit;color:inherit}
+  .mitem:first-of-type{border-top:none}
+  .mitem:hover{background:#f7f9fe}
+  .mitem.on{background:var(--accent-soft);box-shadow:inset 3px 0 0 var(--accent)}
+  .mitem .t{font-weight:600;font-size:14px;letter-spacing:-.01em}
+  .mitem .s{font-size:12px;color:var(--mute);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mitem .m{display:flex;gap:4px;margin-top:6px}
+  .chip{font-size:11px;font-weight:600;padding:1px 7px;border-radius:5px;white-space:nowrap}
+  .ch-원칙{background:var(--ok-soft);color:var(--ok)}
+  .ch-예외{background:var(--warn-soft);color:var(--warn)}
+  .ch-주의{background:var(--red-soft);color:var(--red)}
+  .ch-회사{background:var(--accent-soft);color:var(--accent)}
+  .ch-참고{background:var(--gray-soft);color:var(--mute)}
+  .d-head{padding:20px 24px 16px;border-bottom:1px solid var(--line)}
+  .d-head h2{margin:0;font-size:19px;letter-spacing:-.02em}
+  .d-head p{margin:4px 0 10px;color:var(--mute);font-size:13.5px}
+  .d-head .m{display:flex;gap:5px;flex-wrap:wrap}
+  .d-sec{padding:6px 24px 18px}
+  .d-sec + .d-sec{border-top:1px solid var(--line2)}
+  .d-sec h4{margin:14px 0 4px;font-size:12px;font-weight:700;letter-spacing:.02em;display:flex;align-items:center;gap:7px}
+  .d-sec h4 i{width:8px;height:8px;border-radius:2px;display:inline-block}
+  .srow{display:grid;grid-template-columns:30px 160px minmax(0,1fr);gap:14px;padding:12px 0;border-top:1px dashed var(--line)}
+  .d-sec h4 + .srow{border-top:none}
+  .num{width:26px;height:26px;border-radius:50%;background:var(--side);color:#fff;font-size:12.5px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .slab{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px}
+  .site-chip{display:inline-block;font-size:12.5px;font-weight:600;color:var(--accent);text-decoration:none;background:var(--accent-soft);padding:3px 9px;border-radius:6px;line-height:1.4}
+  a.site-chip:hover{text-decoration:underline}
+  .site-chip.plain{color:#3b4559;background:var(--gray-soft)}
+  .site-chip.none{color:#a3abbb;background:none;padding-left:0}
+  .stodo{font-weight:600;font-size:14px;letter-spacing:-.01em}
+  .snote{font-size:13px;color:var(--mute);margin-top:3px;line-height:1.6}
+
+  .steps{list-style:none;margin:14px 0 4px;padding:0;counter-reset:st}
+  .steps li{counter-increment:st;position:relative;padding:9px 0 9px 38px;border-top:1px solid var(--line2)}
+  .steps li:first-child{border-top:none}
+  .steps li::before{content:counter(st);position:absolute;left:0;top:9px;width:24px;height:24px;border-radius:50%;background:var(--side);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .sl{display:flex;flex-wrap:wrap;align-items:center;gap:7px;font-size:14.5px;line-height:1.5}
+  .sl b{font-weight:600;letter-spacing:-.01em}
+  .sn{font-size:13px;color:var(--mute);margin-top:2px}
+  .stag{display:inline-block;font-size:12px;font-weight:600;color:var(--accent);background:var(--accent-soft);padding:1px 8px;border-radius:5px;text-decoration:none;line-height:1.6;white-space:nowrap}
+  a.stag:hover{text-decoration:underline}
+  .stag.plain{color:#3b4559;background:var(--gray-soft)}
+  .notes{margin:6px 0 4px;padding-left:18px;font-size:13.5px;color:#3b4559}
+  .notes li{padding:4px 0;line-height:1.6}
+  .notes b{color:var(--ink);font-weight:600}
+  .d-sec h4 .chip{font-size:11.5px}
+  .ch-포함{background:var(--ok-soft);color:var(--ok)}
+  .ch-제외{background:var(--red-soft);color:var(--red)}
+  .ie-wrap{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0 6px}
+  .ie{border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .ie h4{margin:0!important;padding:10px 14px;font-size:13.5px!important;display:flex;align-items:center;gap:6px}
+  .ie h4 .n{font-size:11px;font-weight:500;color:var(--mute);border:1px solid var(--line);background:#fff;padding:0 7px;border-radius:999px}
+  .ie.in h4{background:var(--ok-soft);color:var(--ok)}
+  .ie.ex h4{background:var(--red-soft);color:var(--red)}
+  .ie ul{list-style:none;margin:0;padding:4px 14px 8px}
+  .ie li{padding:7px 0;border-top:1px solid var(--line2);font-size:13.5px}
+  .ie li:first-child{border-top:none}
+  .ie li b{font-weight:600;display:block}
+  .ie li span{display:block;font-size:12.5px;color:var(--mute);margin-top:1px}
+  @media (max-width:900px){ .ie-wrap{grid-template-columns:1fr} }
+  /* 서류 */
+  .kind{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:5px;white-space:nowrap}
+  .k-서식{background:var(--accent-soft);color:var(--accent)}
+  .k-첨부{background:var(--warn-soft);color:var(--warn)}
+  .k-발급{background:var(--ok-soft);color:var(--ok)}
+  .k-안내{background:var(--gray-soft);color:var(--mute)}
+  .c-kind{width:70px}
+  .docs .tbl td:nth-child(2){width:38%}
+  .dname{font-weight:600}
+  .dlaw{font-size:12px;color:var(--mute);margin-top:1px}
+  .c-dnote{color:var(--mute);font-size:13px}
+  .c-dl{width:170px;text-align:right}
+
+  /* 계산기 */
+  .calcwrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
+  .pbody{padding:18px 20px}
+  .seg{display:flex;background:var(--gray-soft);border:1px solid var(--line);border-radius:8px;padding:3px;gap:3px;margin-bottom:14px}
+  .seg button{flex:1;border:none;background:none;color:var(--mute);padding:8px 4px;border-radius:6px;font:500 13.5px inherit;cursor:pointer}
+  .seg button.on{background:var(--panel);box-shadow:0 1px 2px rgba(16,24,40,.12);font-weight:700;color:var(--ink)}
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:12.5px;font-weight:600;margin-bottom:5px;color:#3b4559}
+  .field .hint{font-size:12px;color:var(--mute);margin-top:4px}
+  .field input[type=text],.field select{width:100%;padding:10px 12px;font:15px inherit;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink)}
+  .field input[type=text]:focus,.field select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  #amt{font-size:18px;font-weight:600;font-variant-numeric:tabular-nums}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .checks{display:flex;flex-wrap:wrap;gap:14px;font-size:13px}
+  .checks label{display:flex;align-items:center;gap:5px;font-weight:400}
+  .res-panel{position:sticky;top:16px}
+  #calcResult:empty::before{content:"왼쪽에 금액을 입력하면 결과가 여기에 표시됩니다.";display:block;color:var(--mute);padding:36px 0;text-align:center}
+  .big{display:flex;justify-content:space-between;align-items:baseline;padding:4px 0 14px;border-bottom:2px solid var(--ink);margin-bottom:6px}
+  .big span{font-size:13px;color:var(--mute);font-weight:600}
+  .big b{font-size:28px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .rtable{width:100%;border-collapse:collapse;font-size:13.5px}
+  .rtable td{padding:8px 0;border-bottom:1px solid var(--line2)}
+  .rtable td:last-child{text-align:right;font-variant-numeric:tabular-nums}
+  .rtable tr.sub td{color:var(--mute);font-size:12.5px;padding-left:14px}
+  .rtable tr.total td{font-weight:700;border-bottom:none;border-top:1px solid var(--ink);font-size:14.5px}
+  .cnote{font-size:12px;color:var(--mute);margin-top:12px;line-height:1.7;background:var(--head);border:1px solid var(--line2);border-radius:8px;padding:10px 12px}
+  .copy{margin-top:12px;width:100%;padding:10px;border:1px solid var(--ink);background:var(--ink);color:#fff;border-radius:8px;font:600 13.5px inherit;cursor:pointer}
+  .copy:hover{background:#26324d}
+
+  /* 할 일 */
+  .todo{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:10px;margin:0 0 18px;box-shadow:0 1px 2px rgba(16,24,40,.04)}
+  .todo-h{display:flex;align-items:center;gap:8px;padding:11px 18px;border-bottom:1px solid var(--line2);font-weight:700;font-size:13.5px}
+  .todo-h .n{font-size:11.5px;font-weight:500;color:var(--mute);border:1px solid var(--line);padding:0 7px;border-radius:999px}
+  .todo-h small{margin-left:auto;font-weight:400;color:var(--mute);font-size:12px}
+  .todo ul{list-style:none;margin:0;padding:4px 0}
+  .todo li{display:grid;grid-template-columns:78px 96px minmax(0,1fr);gap:12px;align-items:center;padding:9px 18px}
+  .todo li + li{border-top:1px dashed var(--line2)}
+  .dday{font-size:12px;font-weight:800;text-align:center;padding:3px 0;border-radius:6px;background:var(--gray-soft);color:var(--mute)}
+  .dday.soon{background:var(--warn-soft);color:var(--warn)}
+  .dday.urgent{background:var(--red-soft);color:var(--red)}
+  .tdate{font-size:12.5px;color:var(--mute);font-variant-numeric:tabular-nums}
+  .ttxt{font-weight:600;font-size:14px}
+  .ttxt span{font-weight:400;color:var(--mute);font-size:12.5px;margin-left:6px}
+  @media (max-width:900px){ .todo li{grid-template-columns:64px minmax(0,1fr)} .tdate{display:none} }
+  footer{margin-top:30px;color:var(--mute);font-size:12px;border-top:1px solid var(--line);padding-top:14px}
+
+  /* ── 좁은 화면 (휴대폰) ── */
+  @media (max-width:900px){
+    .app{display:block}
+    .side{position:sticky;height:auto;padding:12px 12px 8px;z-index:10;overflow:visible}
+    .brand{padding:0 4px 10px;margin-bottom:8px}
+    .brand .mk{width:28px;height:28px;font-size:13px}
+    .nav-label,.side-box{display:none}
+    .nav{flex-direction:row;overflow-x:auto;gap:4px;scrollbar-width:none}
+    .nav-i{width:auto;white-space:nowrap;padding:7px 11px;font-size:13px}
+    .nav-i em{display:none}
+    .nav-i.on{box-shadow:inset 0 -2px 0 var(--gold)}
+    .main{padding:16px 14px 40px}
+    .top{flex-direction:column;align-items:stretch;gap:12px}
+    .search{width:100%}
+    .search kbd{display:none}
+    .md,.calcwrap{grid-template-columns:1fr}
+    .mlist,.res-panel{position:static;max-height:280px}
+    .res-panel{max-height:none}
+    .c-tags,.tbl th.h-tags{display:none}
+    .c-name{width:auto}
+    .tbl td{padding:11px 12px}
+    .tbl tr{display:grid;grid-template-columns:28px 1fr auto}
+    .tbl .c-desc{grid-column:2 / 4;padding-top:0}
+    .tbl thead{display:none}
+    .docs .tbl tr{grid-template-columns:62px 1fr}
+    .docs .c-dnote,.docs .c-dl{grid-column:2;text-align:left;padding-top:0}
+    .srow{grid-template-columns:28px minmax(0,1fr)}
+    .srow .sw{grid-column:2}
+    .srow .sb{grid-column:2}
+    .d-head,.d-sec{padding-left:16px;padding-right:16px}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="brand"><div class="mk">稅</div><div><b>세무 업무 포털</b><small>TAX WORK CONSOLE</small></div></div>
+    <div class="nav-label">메뉴</div>
+    <nav class="nav" id="nav"></nav>
+    <div class="side-box">
+      <h5 id="todayH"></h5>
+      <ul id="today"></ul>
+      <div class="sync" id="sync">구글 시트 불러오는 중…</div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="top">
+      <div>
+        <div class="crumb">세무 업무 포털 › <b id="crumb"></b></div>
+        <h1 id="title"></h1>
+        <p id="subtitle"></p>
+      </div>
+      <div class="search" id="searchBox">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input type="search" id="q" placeholder="" autocomplete="off">
+        <kbd>/</kbd>
+      </div>
+    </div>
+    <div id="todo"></div>
+    <div class="subtabs" id="tabs"></div>
+
+    <div id="list"></div>
+
+    <div id="calcBox" class="hidden">
+      <div class="calcwrap">
+        <div class="panel">
+          <div class="panel-h">입력</div>
+          <div class="pbody">
+            <div class="seg" id="kind">
+              <button data-k="work" class="on">근로소득</button>
+              <button data-k="biz">사업소득 3.3%</button>
+              <button data-k="etc">기타소득</button>
+            </div>
+            <div class="seg" id="dir">
+              <button data-d="rev" class="on">세후 → 세전</button>
+              <button data-d="fwd">세전 → 세후</button>
+            </div>
+            <div class="field">
+              <label id="amtLabel">실수령액 (세후)</label>
+              <input type="text" id="amt" inputmode="numeric" placeholder="예: 2,500,000">
+              <div class="hint" id="amtHint"></div>
+            </div>
+            <div id="workOpts">
+              <div class="row2">
+                <div class="field">
+                  <label>비과세 금액 (월)</label>
+                  <input type="text" id="nontax" inputmode="numeric" value="0">
+                  <div class="hint">식대 20만원 등. 4대보험·소득세 계산에서 빠짐</div>
+                </div>
+                <div class="field">
+                  <label>공제대상가족 수</label>
+                  <select id="fam"></select>
+                  <div class="hint">본인 포함</div>
+                </div>
+              </div>
+              <div class="row2">
+                <div class="field">
+                  <label>8~20세 자녀 수</label>
+                  <select id="kids"><option value="0">없음</option><option value="1">1명</option><option value="2">2명</option><option value="3">3명</option><option value="4">4명</option><option value="5">5명</option></select>
+                </div>
+                <div class="field">
+                  <label>원천징수 비율</label>
+                  <select id="ratio"><option value="1">100%</option><option value="0.8">80%</option><option value="1.2">120%</option></select>
+                </div>
+              </div>
+              <div class="field">
+                <label>4대보험 적용</label>
+                <div class="checks">
+                  <label><input type="checkbox" id="iNps" checked>국민연금</label>
+                  <label><input type="checkbox" id="iNhis" checked>건강·장기요양</label>
+                  <label><input type="checkbox" id="iEi" checked>고용보험</label>
+                </div>
+              </div>
+            </div>
+            <div id="etcOpts" class="hidden">
+              <div class="field">
+                <label>필요경비</label>
+                <select id="etcExp">
+                  <option value="0.6">60% 인정 (강연료·자문료 등 일시적 인적용역) → 실효 8.8%</option>
+                  <option value="0">필요경비 없음 (사례금 등) → 22%</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="panel res-panel">
+          <div class="panel-h">계산 결과</div>
+          <div class="pbody"><div id="calcResult"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <footer>신고기한·절차는 일반적인 기준입니다. 기한이 주말·공휴일이면 다음 영업일로 연장되며, 사이트 메뉴 이름은 개편으로 바뀔 수 있습니다. 내용 수정은 구글 시트에서 합니다.</footer>
+  </main>
+</div>
+
+<script>
+/* ============================================================
+   구글 시트 (링크가 있는 모든 사용자: 뷰어)
+   - 탭을 '이름'으로 읽습니다. 시트의 '메뉴' 탭에 줄을 추가하면 왼쪽 메뉴가 자동으로 생깁니다.
+     메뉴 탭 형식: 메뉴 이름 | 시트 탭 이름 | 아이콘(이모지, 선택) | 형식(절차 / 서류)
+   ============================================================ */
+const SHEET_ID = "1-pfsd5JseCqrrXeg2TPhClaEmRxruInvQOrF2iAcgek";
+const tabURL = name => `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(name)}`;
+const gidURL = gid  => `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${gid}`;
+const SHEET_CSV_URL = gidURL(0);   // 사이트: 분류 | 이름 | 주소 | 설명 | 태그
+const PROC_CSV_URL  = gidURL(1);   // 절차: 절차명 | 설명 | 순서 | 사이트 | 할 일 | 비고
+const DOCS_CSV_URL  = gidURL(2);   // 서류: 업무 | 서류 | 구분 | 서식 근거 | 받는 곳 | 링크 | 비고
+const SAMU_CSV_URL  = gidURL(3);   // 세무사랑: 업무 | 설명 | 순서 | 메뉴·사이트 | 할 일 | 비고
+const MENU_TAB      = "메뉴";
+/* ============================================================ */
+
+let SITES = [
+  {c:"국세",n:"홈택스",u:"https://www.hometax.go.kr",d:"국세 신고·납부의 중심. 부가세·종소세·법인세·원천세 신고, 전자세금계산서, 사업자등록, 각종 증명 발급, 수임고객 관리(세무대리인 메뉴).",t:["신고","세금계산서","증명발급","수임"]},
+  {c:"국세",n:"국세청",u:"https://www.nts.go.kr",d:"세법 개정 안내, 보도자료, 세무 일정, 각종 서식·안내책자(신고 안내 매뉴얼) 다운로드.",t:["개정세법","안내책자","서식"]},
+  {c:"국세",n:"국세법령정보시스템",u:"https://taxlaw.nts.go.kr",d:"세법·시행령·기본통칙, 질의회신(예규), 판례, 심사·심판 결정례 검색. 애매한 쟁점 확인할 때.",t:["예규","판례","유권해석"]},
+  {c:"국세",n:"조세심판원",u:"https://www.tt.go.kr",d:"조세심판 청구 및 심판결정례 검색. 불복 사건 검토용.",t:["불복","심판례"]},
+  {c:"국세",n:"관세청 유니패스",u:"https://unipass.customs.go.kr",d:"수출입 신고 내역, 수입세금계산서, 통관 조회. 수출입 거래처 부가세 검토 시.",t:["수출입","관세"]},
+  {c:"지방세",n:"위택스",u:"https://www.wetax.go.kr",d:"지방세 신고·납부. 법인 지방소득세, 취득세, 재산세, 주민세(사업소분), 지방세 납세증명 발급.",t:["지방소득세","취득세","재산세"]},
+  {c:"지방세",n:"서울시 이택스",u:"https://etax.seoul.go.kr",d:"서울시 지방세 조회·납부 전용. 서울 소재 고객 지방세 고지 내역 확인.",t:["서울","지방세 납부"]},
+  {c:"4대보험·노무",n:"4대사회보험 정보연계센터",u:"https://www.4insure.or.kr",d:"4대보험 취득·상실·변경 신고를 한 번에 처리. 보험료 계산기, 사업장 가입.",t:["취득신고","상실신고","보험료 계산"]},
+  {c:"4대보험·노무",n:"국민건강보험 EDI",u:"https://edi.nhis.or.kr",d:"건강보험 사업장 업무: 보수총액 신고, 고지내역 조회, 자격 변동 신고, 정산.",t:["건강보험","보수총액","고지내역"]},
+  {c:"4대보험·노무",n:"국민연금 EDI",u:"https://edi.nps.or.kr",d:"국민연금 사업장 업무: 자격 신고, 결정내역·고지내역 조회.",t:["국민연금","고지내역"]},
+  {c:"4대보험·노무",n:"근로복지공단 고용·산재 토탈서비스",u:"https://total.comwel.or.kr",d:"고용·산재보험 보수총액 신고, 성립신고, 근로내용확인신고(일용직), 보험료 조회.",t:["고용보험","산재보험","일용직"]},
+  {c:"4대보험·노무",n:"4대사회보험료 통합징수포털",u:"https://si4n.nhis.or.kr",d:"건강보험공단이 4대보험료를 통합 고지·징수. 사업장 납부현황, 산출내역 조회로 월별 고지액 확인.",t:["보험료 고지","납부현황","산출내역"]},
+  {c:"4대보험·노무",n:"고용보험",u:"https://www.ei.go.kr",d:"실업급여, 육아휴직급여, 고용지원금 등 사업주·근로자 지원제도 신청·조회.",t:["지원금","육아휴직"]},
+  {c:"4대보험·노무",n:"고용노동부",u:"https://www.moel.go.kr",d:"노동법 개정사항, 최저임금, 근로기준법 해석·질의회시, 표준근로계약서 서식.",t:["노동법","최저임금","근로계약서"]},
+  {c:"행정·부동산",n:"정부24",u:"https://www.gov.kr",d:"주민등록등·초본, 건축물대장, 토지대장, 가족관계 관련 민원 등 각종 행정서류 발급.",t:["등본","건축물대장","토지대장"]},
+  {c:"행정·부동산",n:"대법원 인터넷등기소",u:"https://www.iros.go.kr",d:"부동산 등기부등본, 법인 등기사항증명서 열람·발급. 법인 설립·변경 확인.",t:["등기부등본","법인등기"]},
+  {c:"행정·부동산",n:"세움터",u:"https://www.eais.go.kr",d:"건축물대장 열람·발급, 건축 인허가 정보. 건물 면적·용도 확인.",t:["건축물대장","용도"]},
+  {c:"행정·부동산",n:"부동산공시가격 알리미",u:"https://www.realtyprice.kr",d:"공동주택·개별주택 공시가격, 개별공시지가 조회. 양도·상속·증여 기준시가 확인.",t:["공시가격","기준시가","양도세"]},
+  {c:"행정·부동산",n:"국토부 실거래가 공개시스템",u:"https://rt.molit.go.kr",d:"아파트·토지 등 부동산 실거래가 조회. 시가 판단, 양도세·증여세 검토.",t:["실거래가","시가"]},
+  {c:"행정·부동산",n:"토지이음",u:"https://www.eum.go.kr",d:"토지이용계획확인원 열람. 용도지역·규제 확인(비사업용 토지 판단 등).",t:["토지이용계획","용도지역"]},
+  {c:"법령·기업정보",n:"국가법령정보센터",u:"https://www.law.go.kr",d:"모든 법령·시행령·시행규칙 원문과 신구조문 대비표. 개정 이력 확인.",t:["법령","신구조문"]},
+  {c:"법령·기업정보",n:"전자공시시스템 DART",u:"https://dart.fss.or.kr",d:"기업 재무제표·감사보고서·공시 열람. 거래처·고객사 재무상태 파악.",t:["재무제표","감사보고서"]},
+  {c:"법령·기업정보",n:"한국세무사회",u:"https://www.kacta.or.kr",d:"세무사회 공지, 보수교육, 회원 업무 자료와 세무 실무 정보.",t:["세무사회","보수교육"]},
+];
+
+/* 절차: steps = [사이트, 할 일, 비고] — 사이트는 위 목록의 이름(또는 주소), 없으면 "" */
+let PROCS = [{"n": "건물 기준시가 구하기", "d": "양도·상속·증여세에서 건물 가액을 기준시가로 산정할 때", "steps": [["정부24", "건축물대장 출력", "구조·용도·면적·사용승인일 확인", ""], ["홈택스", "건물 기준시가 계산", "조회/발급 > 기준시가 조회 > 건물기준시가", ""], ["", "계산 결과 저장", "양도는 취득 당시·양도 당시 각각", ""], ["홈택스", "고시 오피스텔·상업용건물", "계산 없이 국세청 고시가격 사용", "예외"], ["부동산공시가격 알리미", "주택", "개별·공동주택 공시가격 사용", "예외"], ["홈택스", "2000.12.31 이전 취득", "2001.1.1 기준시가 × 국세청 기준율 (취득일 넣으면 자동 계산)", "예외"], ["부동산공시가격 알리미", "토지분은 따로", "개별공시지가로 산정 후 합산", "주의"]]}, {"n": "부동산 양도소득세 신고", "d": "부동산 양도 시 자료 수집부터 국세·지방세 신고까지", "steps": [["대법원 인터넷등기소", "등기사항증명서 출력", "소유자·지분·취득일 확인", ""], ["", "매매계약서(취득·양도) 확인", "실거래가·잔금일", ""], ["", "양도일·취득일 확정", "잔금일 원칙, 그 전에 등기했으면 등기접수일", ""], ["정부24", "주민등록초본 출력", "1세대1주택·보유·거주기간 검토", ""], ["홈택스", "양도소득세 신고", "기한: 양도일이 속한 달 말일부터 2개월", ""], ["위택스", "지방소득세 신고·납부서 출력", "홈택스 신고내역 > 지방소득세 신고이동", ""], ["", "취득가액을 모를 때", "'환산취득가액 계산' 참고", "예외"], ["홈택스", "공익사업 수용", "양도일: 보상금 수령일·수용개시일·등기접수일 중 빠른 날 / 양수인 = 사업시행자 / 조특법 77조 감면 검토", "예외"], ["", "양수인이 법인·기관", "사업자등록번호 입력", "예외"], ["토지이음", "비사업용 토지·중과 여부", "비사업용 토지 +10%p, 다주택 중과 확인", "주의"], ["", "토지·건물 함께 양도", "자산별 계산 후 합산, 기본공제 250만원 1회", "주의"], ["국토부 실거래가 공개시스템", "특수관계인·저가 양도", "인근 유사 거래가 확인", "주의"]]}, {"n": "환산취득가액 계산", "d": "취득 실거래가 증빙이 없을 때 양도세 취득가액 환산", "steps": [["대법원 인터넷등기소", "토지·건물 취득일 확인", "신축 건물은 사용승인일", ""], ["", "의제취득일 판단", "1984.12.31 이전 취득은 1985.1.1 취득으로 봄", ""], ["부동산공시가격 알리미", "토지 취득 당시 기준시가", "취득연도 개별공시지가 × 면적", ""], ["홈택스", "건물 취득·양도 당시 기준시가", "'건물 기준시가 구하기' 참고", ""], ["", "양도가액 토지·건물 안분", "계약일 기준시가 비율, 계약서 가액과 30% 이상 차이 나면 안분가액", ""], ["", "환산취득가액 계산", "양도가액 × 취득 당시 기준시가 ÷ 양도 당시 기준시가 (토지·건물 각각)", ""], ["", "건물 감가상각비 차감", "필요경비로 넣은 감가상각비 (소득세법 제97조 제3항)", ""], ["", "개산공제", "취득 당시 기준시가 × 3%", ""], ["정부24", "1990.8.30 이전 취득 토지", "1990.1.1 공시지가 × 취득 당시 등급가액 ÷ (1990.8.30 등급가액 + 직전 등급가액) ÷ 2", "예외"], ["정부24", "토지등급 확인", "토지대장 등급 이력, 각 시점 직전 등급 적용", "예외"], ["", "상속·증여 취득", "상속·증여세 신고가액 기준", "예외"], ["", "장부에 취득가액이 있는 경우", "환산이 부인될 수 있음", "주의"], ["", "신축·증축 후 5년 내 양도", "건물분 환산가액의 5% 가산세", "주의"]]}, {"n": "원천세 신고 (매월)", "d": "급여·사업소득 등 지급한 다음 달 10일까지", "steps": [["", "급여대장 확정", "지급액·비과세·4대보험·소득세", ""], ["세무사랑 Pro", "원천징수이행상황신고서 작성", "", ""], ["홈택스", "원천세 신고·납부서 출력", "", ""], ["위택스", "지방소득세 신고·납부서 출력", "원천세의 10%", ""], ["홈택스", "지급명세서 제출", "소득별 제출 기한 확인", ""], ["", "반기별 납부 사업장", "승인받은 소규모 사업장은 반기 신고", "예외"]]}, {"n": "4대보험 자격취득·상실 신고", "d": "직원 입사·퇴사 시", "steps": [["", "근로계약서 확인", "입·퇴사일, 월 보수액", ""], ["세무사랑 Pro", "취득(상실)신고서 작성·신고", "기한: 다음 달 15일", ""], ["국민건강보험 EDI", "처리결과 확인", "피부양자 포함", ""], ["근로복지공단 고용·산재 토탈서비스", "고용·산재 처리결과 확인", "", ""], ["근로복지공단 고용·산재 토탈서비스", "일용직", "근로내용확인신고", "예외"]]}, {"n": "사업자등록 신청 (대리)", "d": "고객 대신 홈택스로 사업자등록할 때", "steps": [["", "서류 받기", "신분증 사본, 위임장, 임대차계약서", ""], ["홈택스", "사업자등록 신청", "신청/제출 > 사업자등록 신청", ""], ["홈택스", "처리상황 조회", "보통 2일 이내", ""], ["홈택스", "사업자등록증 출력·수임 등록", "", ""], ["", "인허가 업종", "허가·등록증 사본", "예외"], ["", "공동사업자", "동업계약서", "예외"], ["", "법인", "법인설립신고서, 법인 명의 임대차계약서", "예외"], ["", "임대인이 여러 명", "'사업장 임대차 명세' 별지 첨부 (서식·서류 메뉴)", "예외"], ["", "특정 업종", "금지금·유흥장소 등은 자금출처명세서", "예외"], ["", "대리 신청", "사업자등록 신청내용 확인서 제출", "주의"]]}, {"n": "통상임금으로 법정수당 계산", "d": "연차·연장·야간·휴일수당 등", "steps": [["", "임금 자료 확인", "급여대장·근로계약서·취업규칙", ""], ["", "월 통상임금 산정", "소정근로 대가 + 정기성 + 일률성 (연장수당·성과급 제외)", ""], ["", "시간급 계산", "월 통상임금 ÷ 209시간 (주 40시간 기준)", ""], ["", "일급 계산", "시간급 × 8시간", ""], ["", "수당 계산", "연차수당 = 일급 × 미사용일수 / 연장 = 시간급 × 1.5", ""], ["", "명칭과 실질이 다른 수당", "실질로 판단", "예외"], ["", "회사 규정이 더 유리", "회사 규정 적용", "예외"], ["", "퇴직금", "통상임금이 아니라 평균임금 (연장수당 포함)", "주의"]]}, {"n": "통상임금 포함·제외 항목", "d": "어떤 수당이 통상임금에 들어가는지 빠르게 확인", "steps": [["", "판단 기준", "소정근로 대가 + 정기적 + 일률적 (고정성 요건 폐지, 대법원 2024.12.19)", ""], ["", "이름이 아니라 지급 조건으로 판단", "같은 '수당'이라도 누구에게, 어떤 조건으로 주는지 확인", ""], ["", "기본급", "", "포함"], ["", "직책·직무·자격·기술수당", "해당자 전원에게 정액 지급", "포함"], ["", "근속수당", "근속연수별 정해진 금액", "포함"], ["", "정기상여금", "재직자·근무일수 조건이 붙어도 포함", "포함"], ["", "명절상여금·휴가비", "매년 정해진 시기·금액으로 지급", "포함"], ["", "식대·교통비·통신비", "전 직원 정액 지급", "포함"], ["", "가족수당 기본금액", "가족 유무와 관계없이 전원 지급분", "포함"], ["", "성과급 최소 보장분", "성과와 상관없이 주는 최저 금액", "포함"], ["", "연장·야간·휴일근로수당", "소정근로 대가 아님", "제외"], ["", "실적·평가로 달라지는 성과급", "", "제외"], ["", "부양가족 수로 달라지는 가족수당", "", "제외"], ["", "경조사비·일시 격려금", "임시·우연 지급", "제외"], ["", "실비 변상", "출장비 등 실제 쓴 만큼 정산", "제외"], ["", "퇴직금은 평균임금", "최근 3개월 실제 지급액 전부(연장수당 포함)로 계산", "주의"]]}];
+let DOCS = [["사업자등록 신청", "사업자등록 신청서(개인사업자용)", "서식", "부가가치세법 시행규칙 별지 제4호서식 (현행본)", "국가법령정보센터", "https://www.law.go.kr/%EB%B2%95%EB%A0%B9%EB%B3%84%ED%91%9C%EC%84%9C%EC%8B%9D/(%EB%B6%80%EA%B0%80%EA%B0%80%EC%B9%98%EC%84%B8%EB%B2%95%EC%8B%9C%ED%96%89%EA%B7%9C%EC%B9%99,%EC%84%9C%EC%8B%9D4)", "원칙. 홈택스 신청 시 화면 입력으로 대신함"], ["사업자등록 신청", "법인설립신고 및 사업자등록신청서", "서식", "법인세법 시행규칙 별지 제73호서식 (현행본)", "국가법령정보센터", "https://www.law.go.kr/%EB%B2%95%EB%A0%B9%EB%B3%84%ED%91%9C%EC%84%9C%EC%8B%9D/(%EB%B2%95%EC%9D%B8%EC%84%B8%EB%B2%95%EC%8B%9C%ED%96%89%EA%B7%9C%EC%B9%99,%EC%84%9C%EC%8B%9D73)", "예외: 법인"], ["사업자등록 신청", "임대차계약서 사본", "첨부", "", "", "", "사업장을 임차한 경우 (법인은 법인 명의)"], ["사업자등록 신청", "[별지] 사업장 임대차 명세 (임대인별)", "서식", "회사 자체 서식", "", "forms/imdaein_byeolji.docx", "예외: 임대인이 여러 명일 때 임대인·호실별로 정리해 첨부. 주민등록번호 뒷자리는 출력 후 직접 기재"], ["사업자등록 신청", "허가·등록·신고증 사본", "첨부", "", "", "", "예외: 인허가 업종. 허가 전이면 허가신청서 사본 또는 사업계획서"], ["사업자등록 신청", "동업계약서", "첨부", "", "", "", "예외: 공동사업자"], ["사업자등록 신청", "자금출처명세서", "서식", "", "", "https://www.nts.go.kr/nts/cm/cntnts/cntntsView.do?cntntsId=7778", "예외: 금지금·연료 도소매업, 재사용 재료 수집·판매업, 과세유흥장소"], ["사업자등록 신청", "사업자등록 신청내용 확인서", "서식", "부가가치세 사무처리규정 별지 제4호 서식", "국가법령정보센터", "https://www.law.go.kr/LSW/admRulBylSc.do", "세무대리인이 신청할 때. 행정규칙 별표·서식에서 서식명 검색 → HWP"], ["사업자등록 신청", "전체 제출서류 안내", "안내", "", "", "https://www.nts.go.kr/nts/cm/cntnts/cntntsView.do?cntntsId=7778", "국세청 '사업자등록 신청시 제출서류' (개인·법인·단체별)"], ["사업자등록 정정·휴폐업", "사업자등록 정정신고서", "서식", "부가가치세법 시행규칙 별지 제11호서식 (현행본)", "국가법령정보센터", "https://www.law.go.kr/%EB%B2%95%EB%A0%B9%EB%B3%84%ED%91%9C%EC%84%9C%EC%8B%9D/(%EB%B6%80%EA%B0%80%EA%B0%80%EC%B9%98%EC%84%B8%EB%B2%95%EC%8B%9C%ED%96%89%EA%B7%9C%EC%B9%99,%EC%84%9C%EC%8B%9D11)", "홈택스에서도 신고 가능"], ["사업자등록 정정·휴폐업", "정정 사유별 제출서류 안내", "안내", "", "", "https://www.nts.go.kr/taxpayer_advocate/na/ntt/selectNttList.do?mi=40396&bbsId=50728", "국세청 납세자보호 게시판"], ["사업자등록 정정·휴폐업", "휴업(폐업)신고서", "서식", "부가가치세법 시행규칙 별지 제9호서식 (현행본)", "국가법령정보센터", "https://www.law.go.kr/%EB%B2%95%EB%A0%B9%EB%B3%84%ED%91%9C%EC%84%9C%EC%8B%9D/(%EB%B6%80%EA%B0%80%EA%B0%80%EC%B9%98%EC%84%B8%EB%B2%95%EC%8B%9C%ED%96%89%EA%B7%9C%EC%B9%99,%EC%84%9C%EC%8B%9D9)", "폐업 시 사업자등록증 원본, 포괄양도면 양도·양수계약서 사본. 홈택스에서도 신고 가능"], ["사업자등록 정정·휴폐업", "(휴업자)재개업 신고서 작성방법", "안내", "", "", "https://www.nts.go.kr/taxpayer_advocate/na/ntt/selectNttList.do?mi=40396&bbsId=50728", "국세청 납세자보호 게시판"], ["사업자등록 정정·휴폐업", "휴업·폐업 사실증명", "발급", "국세청민원사무처리규정 제8호 서식", "홈택스", "", "홈택스 증명발급"], ["원천세 신고", "원천징수이행상황신고서", "서식", "소득세법 시행규칙 별지 제21호서식", "세무사랑 Pro", "", "회사 방식: 세무사랑 Pro에서 작성 → 홈택스 제출"], ["원천세 신고", "원천징수세액 반기별납부 승인신청서", "서식", "소득세법 시행규칙 별지 제21호의2서식 (현행본)", "국가법령정보센터", "https://www.law.go.kr/%EB%B2%95%EB%A0%B9%EB%B3%84%ED%91%9C%EC%84%9C%EC%8B%9D/(%EC%86%8C%EB%93%9D%EC%84%B8%EB%B2%95%EC%8B%9C%ED%96%89%EA%B7%9C%EC%B9%99,%EC%84%9C%EC%8B%9D21%EC%9D%982)", "예외: 반기별 납부로 바꿀 때"], ["원천세 신고", "지급명세서", "서식", "", "홈택스", "", "홈택스 제출. 소득 종류별 제출 시기 확인"], ["원천세 신고", "특별징수 지방소득세 신고서", "서식", "", "위택스", "", "위택스 신고·납부"], ["4대보험 취득·상실", "사업장가입자 자격취득신고서 (4대 공통)", "서식", "", "세무사랑 Pro", "", "회사 방식: 세무사랑 Pro에서 작성. 기한: 다음 달 15일"], ["4대보험 취득·상실", "사업장가입자 자격상실신고서 (4대 공통)", "서식", "", "", "https://www.nhis.or.kr/static/html/wbdb/f/wbdbf0201.html", "기한: 다음 달 15일"], ["4대보험 취득·상실", "사업장가입자 내용변경신고서 (국민연금)", "서식", "", "", "https://nps.or.kr/pnsinfo/databbs/getOHAF0279M0List.do?menuId=MN24000998", "국민연금 서식자료실"], ["4대보험 취득·상실", "일용근로자 근로내용확인신고서", "서식", "", "근로복지공단 고용·산재 토탈서비스", "", "예외: 일용직"], ["양도소득세 신고", "양도소득과세표준 신고 및 납부계산서", "서식", "소득세법 시행규칙 별지 제84호서식 (현행본)", "국가법령정보센터", "https://www.law.go.kr/%EB%B2%95%EB%A0%B9%EB%B3%84%ED%91%9C%EC%84%9C%EC%8B%9D/(%EC%86%8C%EB%93%9D%EC%84%B8%EB%B2%95%EC%8B%9C%ED%96%89%EA%B7%9C%EC%B9%99,%EC%84%9C%EC%8B%9D84)", "전자신고는 홈택스. 부표(양도소득금액계산명세서) 포함"], ["양도소득세 신고", "매매계약서(또는 증여계약서)", "첨부", "", "", "", "원칙 붙임서류"], ["양도소득세 신고", "필요경비 증빙서류", "첨부", "", "", "", "원칙 붙임서류"], ["양도소득세 신고", "등기사항증명서", "발급", "", "대법원 인터넷등기소", "", "취득일·소유자·지분 확인"], ["양도소득세 신고", "주민등록초본(주소 이력)", "발급", "", "정부24", "", "1세대1주택 등 요건 검토"], ["양도소득세 신고", "개인지방소득세(양도소득분) 신고서·납부서", "발급", "", "위택스", "", "홈택스 '지방소득세 신고이동' → 위택스 제출 후 출력"], ["양도소득세 신고", "보상계약서·수용재결서", "첨부", "", "", "", "예외: 수용·협의매수. 양도일·사업시행자 확인"], ["양도소득세 신고", "수용확인서", "발급", "", "", "", "예외: 수용. 사업시행자에 발급 요청, 감면 신청 시 첨부"], ["양도소득세 신고", "세액감면신청서 (조세특례제한법 제77조)", "서식", "", "국세법령정보시스템", "", "예외: 공익사업 수용 감면. 서식번호 확인 필요"], ["양도소득세 신고", "양수인 법인 등기사항증명서", "발급", "", "대법원 인터넷등기소", "", "예외: 양수인이 법인·기관이고 법인등록번호가 필요할 때"], ["통상임금·법정수당", "급여대장·근로계약서·취업규칙·임금명세서", "첨부", "", "", "", "수당별 지급 기준(정기·일률·소정근로 대가) 판단 근거"], ["공통", "서식 원본 찾기 (법령·훈령 서식 전체)", "안내", "", "국세법령정보시스템", "", "상단 메뉴 '별표·서식'에서 서식명으로 검색, 한글·PDF로 다운로드"]];
+
+let SAMU = [{"n": "신규 수임 (기장대리 시작)", "d": "새 고객의 기장을 맡을 때", "steps": [["홈택스", "기장대리(수임) 등록", "세무대리인 메뉴에서 수임 등록 → 고객 동의", ""], ["세무사랑 Pro", "회사등록", "비어 있는 회사 번호를 골라 등록", ""], ["홈택스", "고객 수임동의가 안 될 때", "'세무대리정보이용신청'으로 진행. 내 신분증·고객 신분증 등 파일 3개 첨부", "예외"]]}, {"n": "신규 사원 등록·4대보험 취득신고", "d": "근로계약 체결 후 세무사랑에서 사원등록부터 취득신고까지", "steps": [["", "근로계약 체결 확인", "입사일, 월 지급액, 비과세 항목(식대 등), 피부양자 여부", ""], ["세무사랑 Pro", "사원등록", "", ""], ["", "보수월액 산정", "지급액 − 비과세(식대 등) = 월급여 = 보수월액", ""], ["세무사랑 Pro", "사업장가입자 취득신고서 작성", "직장(사업장) 입력, 피부양자 해당 여부 체크", ""], ["세무사랑 Pro", "취득신고서 출력·신고", "", ""], ["", "공단 접수 후 신고결과 조회", "접수일시 확인 → 신고결과 조회까지 하는 습관", ""], ["", "1일 입사가 아닌 경우", "'취득월 납부 미희망' 선택 → 입사한 달 보험료는 내지 않음 (국민연금·건강보험은 1일 취득이면 그 달부터 부과)", "예외"], ["세무사랑 Pro", "세후 금액으로 계약한 경우", "급여자료 입력에서 세후 금액이 맞도록 보수월액을 맞춰야 함 → 홈페이지 '계산' 탭(세후→세전)으로 먼저 계산하면 편함", "주의"], ["", "처리 시점", "입사일부터 2주 안에 처리 (법정 기한은 입사한 달의 다음 달 15일)", "회사"]]}, {"n": "급여 신고 — 근로·사업소득", "d": "매월 급여·사업소득 원천세 신고 (마감 + 인쇄)", "steps": [["세무사랑 Pro", "급여(사업소득) 자료입력", "자료입력 → F2 → 세전·세후 금액 체크", ""], ["세무사랑 Pro", "원천징수이행상황신고서 작성 → 전자신고 → 출력", "기한: 지급한 달의 다음 달 10일 (전자신고 파일은 홈택스 제출)", ""], ["위택스", "지방소득세 신고 → 납부서 출력", "납부서는 화면 가운데 탭에서 출력", ""], ["홈택스", "간이지급명세서 제출 → 접수증 출력", "다음 달 1일부터 제출 가능. '신고' 항목에 들어가서 출력", ""], ["홈택스", "지급명세서·간이지급명세서 미제출", "안 내면 가산세", "주의"], ["", "출근하면 먼저 확인", "지급명세서 제출 접수증, 간이지급명세서 제출 여부", "회사"]]}, {"n": "급여 신고 — 기타소득", "d": "강연료·자문료 등 기타소득 원천세 신고", "steps": [["세무사랑 Pro", "기타소득 자료입력", "건수가 적으면 직접 입력", ""], ["세무사랑 Pro", "원천징수이행상황신고서 → 전자신고 → 출력", "기한: 지급한 달의 다음 달 10일", ""], ["위택스", "지방소득세 신고 → 납부서 출력", "", ""], ["홈택스", "간이지급명세서 제출 → 접수증 출력", "다음 달 1일부터 가능. '신고' 항목에서 출력", ""], ["세무사랑 Pro", "자료가 많은 경우: 엑셀 업로드", "서식 다운로드 → 필수정보 입력 → 업로드 → 금액 검산. 주민번호 오류가 나면 서식(셀 형식) 확인", "예외"], ["", "사업자에게 지급한 경우", "(세금)계산서를 발급하는 사업자에게 준 돈은 기타소득으로 신고하지 않음", "주의"]]}, {"n": "재직증명서 발급", "d": "직원 재직증명서를 세무사랑에서 발급", "steps": [["", "Scrap Module에서 문서번호 생성", "민원증명 발급대장 → 신규 → 문서번호 생성 → 상호·담당자(본인 이름) 입력", ""], ["세무사랑 Pro", "재직증명서 발급", "사원관리 → 재직증명서 → F2 → 발급번호 칸에 1번 문서번호 붙여넣기", ""]]}, {"n": "4대보험료 납부 전표", "d": "고지된 4대보험료를 일반전표로 입력", "steps": [["4대사회보험료 통합징수포털", "고지액 확인", "납부현황 + 산출내역조회 → 월별 고지액 확인 (보수 변동이 반영되는 1월·7월 등은 특히 체크)", ""], ["세무사랑 Pro", "거래처원장에서 기존 처리 확인", "계정과목 검색으로 전에 어떻게 처리했는지 확인", ""], ["세무사랑 Pro", "국민연금 전표", "차) 예수금(근로자 50%) + 세금과공과(사업주 50%) / 대) 현금·예금(고지액)", ""], ["세무사랑 Pro", "건강(+장기요양)·고용·산재 전표", "차) 예수금(근로자분) + 보험료(사업주분) / 대) 현금·예금(고지액). 적요 19번", ""], ["세무사랑 Pro", "개인사업자 대표 본인 국민연금", "인출금 100% 처리 (사업주는 연금보험료 소득공제를 받으므로 비용 아님)", "예외"], ["세무사랑 Pro", "급여 지급 전표", "차) 급여 / 대) 예수금 + 현금(예금)", "참고"]]}, {"n": "세금 납부 전표 (세무서·구청)", "d": "세금 납부액을 일반전표로 처리", "steps": [["", "원천징수한 세금인지 확인", "근로소득세·퇴직소득세 등 원천징수분이면 → 예수금(254) 상계", ""], ["", "원천징수가 아닌 사업 관련 세금", "면허세·주민세·자동차세 등 → 세금과공과(817)", ""], ["", "종합소득세", "사업자 본인 세금이라 비용 처리하지 않음", "주의"], ["홈택스", "국세 납부 내역 확인", "국세민원 → 서류 찾기 → 납세증명서 등", "참고"], ["위택스", "지방세 납부 내역 확인", "발급 → 납세자 조회 → 발급대상 조회. 세무사랑 회사등록의 '사업장 주소'와 '자택 주소'로 두 번 검색", "참고"]]}, {"n": "부가세 기장 — 매출", "d": "개인은 모두 현금거래로 가정해 가결산", "steps": [["홈택스", "카드매출(카과)", "세무대리 → 신용카드 매출자료 조회. 부가세 신고자료와 비교해 큰 금액 사용", ""], ["홈택스", "현금매출(현과)", "세무대리 → 현금영수증 매출 조회", ""], ["세무사랑 Pro", "전자세금계산서(과세)", "국세청 전자세금계산서 불러오기 → 기간 선택 → 유형 일괄 변경: 혼합 / 대) 과세매출(420) · 차) 현금", ""], ["세무사랑 Pro", "전자계산서(면세)", "같은 방법 → 유형 일괄 변경: 혼합 / 대) 면세매출 · 차) 현금", ""]]}, {"n": "부가세 기장 — 매입", "d": "매입 자료 유형별 입력", "steps": [["세무사랑 Pro", "종이 세금계산서·계산서", "매입매출전표 직접 입력. 일반전표와 달리 계정과목을 직접 바꿔야 함. 예: 공통 → 불공제(54)", ""], ["세무사랑 Pro", "전자세금계산서", "국세청 전자세금계산서 불러오기 → 체크 후 계정과목(코드) 변경. 개인은 유형 일괄 변경으로 전부 '현금'", ""], ["홈택스", "신용카드·현금영수증 내역 받기", "'사업주'로 로그인 → 신용카드 매입 → 매입세액 공제 확인 → 월별 체크 → 내려받기 (간이·면세 사업자분은 불공제)", ""], ["", "엑셀로 정리", "Ctrl+Shift+L(필터)로 거래처(신카코드)·공제여부·계정과목 정리. 공제 / 공제(공통) / 불공제를 색깔로 구분. 날짜 8자리는 사용자 지정 서식 yyyymmdd", ""], ["세무사랑 Pro", "세무사랑 서식에 복사·전송", "서식 다운로드 후 붙여넣기", ""], ["세무사랑 Pro", "전부 불공제인 경우", "'일반' 전표로 전송 (순차-코드-거래처코드-적요명-금액-카드사용여부)", "예외"], ["세무사랑 Pro", "일부만 공제인 경우", "'신카' 전표로 전송 (카드종류-카드명-번호-승인일자-등록번호-거래처명-공급가액-세액-봉사료-합계-공제여부-계정과목-적요-공제유형: 공통공제/공제=57)", "예외"], ["", "세금계산서와 신용카드 중복분", "중복이면 가지급금(134)으로 처리, 비용 처리 금지. 사업 비용이 아닌 것도 가지급금", "주의"], ["", "보험료·통신비", "이중공제 여부에 따라 불공제 처리. 노트 원문: '스마트로·한국정보통신은 제외 = 173' → 선배님께 확인 필요", "주의"], ["세무사랑 Pro", "매입매출장으로 확인", "매입 → 불공 → 공통 선택", "참고"]]}];
+
+const DEADLINES = {
+  1:["1/10 원천세 신고·납부","1/25 부가세 2기 확정신고(개인·법인)"],
+  2:["2/10 원천세","2/10 면세사업자 사업장현황신고","2월 급여 지급 시 연말정산"],
+  3:["3/10 원천세 + 근로·퇴직·사업소득 지급명세서 제출","3/31 법인세 신고(12월 결산법인)"],
+  4:["4/10 원천세","4/25 부가세 1기 예정신고(법인)","4/30 법인 지방소득세"],
+  5:["5/10 원천세","5/31 종합소득세·개인 지방소득세 (성실신고 대상은 6/30)"],
+  6:["6/10 원천세","6/30 성실신고확인 대상자 종합소득세"],
+  7:["7/10 원천세(반기납부 포함)","7/25 부가세 1기 확정신고","7월 재산세(건축물·주택 1기분)"],
+  8:["8/10 원천세","8/31 법인세 중간예납(12월 결산법인)"],
+  9:["9/10 원천세","9월 재산세(토지·주택 2기분)"],
+  10:["10/10 원천세","10/25 부가세 2기 예정신고(법인)"],
+  11:["11/10 원천세","11/30 종합소득세 중간예납 고지분 납부"],
+  12:["12/10 원천세","12/15 종합부동산세 납부"],
+};
+
+/* ---------- 메뉴 ---------- */
+const ICONS = {
+  sites:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 3.8 5.7 3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3z"/></svg>',
+  procs:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.3"/><circle cx="4.5" cy="12" r="1.3"/><circle cx="4.5" cy="18" r="1.3"/></svg>',
+  samu:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>',
+  docs:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>',
+  calc:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 12h.01M12 12h.01M16 12h.01M8 16h.01M12 16h.01M16 16h.01"/></svg>',
+  folder:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>'
+};
+let MENU = [
+  {id:"sites", label:"사이트 바로가기", type:"sites", ic:"sites", desc:"업무에 쓰는 사이트와 각 사이트에서 하는 일", ph:"사이트 이름이나 업무로 검색 (예: 건축물대장, 4대보험)"},
+  {id:"procs", label:"업무 절차",       type:"procs", ic:"procs", desc:"업무별 순서와 예외·주의 요약", ph:"절차 검색 (예: 기준시가, 양도세, 원천세)"},
+  {id:"samu",  label:"세무사랑",         type:"procs", ic:"samu",  desc:"세무사랑 Pro 기장·신고 절차와 메뉴 경로, 계정코드", ph:"세무사랑 검색 (예: 취득신고, 기타소득, 매입, 254)"},
+  {id:"docs",  label:"서식·서류",        type:"docs",  ic:"docs",  desc:"업무별 필요 서류와 서식 받는 곳", ph:"서류 검색 (예: 사업자등록, 정정, 상실신고)"},
+  {id:"calc",  label:"급여 계산기",      type:"calc",  ic:"calc",  desc:"근로·사업·기타소득 세후 ↔ 세전 역산 (2026년 기준)"}
+];
+const DATA = {};
+function syncData(){ DATA.procs=PROCS; DATA.samu=SAMU; DATA.docs=DOCS; }
+syncData();
+
+/* ---------- 상태 ---------- */
+const store = {
+  get(k,d){ try{ const v=localStorage.getItem(k); return v===null?d:JSON.parse(v); }catch(e){ return d; } },
+  set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+let favs = store.get("taxFavs", []);
+const hashId = () => { try{ return decodeURIComponent(location.hash.slice(1)); }catch(e){ return location.hash.slice(1); } };
+const wanted = hashId() || store.get("taxMode","sites");
+let mode = MENU.some(m=>m.id===wanted) ? wanted : "sites";
+let sel = store.get("taxSel", {});
+let CATS = [];
+let cat = store.get("taxCat","전체");
+const cur = () => MENU.find(m=>m.id===mode) || MENU[0];
+
+function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+function findSite(name){
+  if(!name) return null;
+  if(/^https?:\/\//.test(name) || /\.(kr|com|net|org)/.test(name)){
+    const u = /^https?:\/\//.test(name) ? name : "https://"+name;
+    const s = SITES.find(x=>x.u.replace(/\/$/,"")===u.replace(/\/$/,""));
+    return {n: s?s.n:name.replace(/^https?:\/\//,""), u};
+  }
+  const s = SITES.find(x=>x.n===name) || SITES.find(x=>x.n.includes(name) || name.includes(x.n));
+  return s ? {n:name, u:s.u} : {n:name, u:null};
+}
+function refreshCats(){
+  CATS = ["전체", ...new Set(SITES.map(s=>s.c))];
+  if(!CATS.includes(cat)) cat="전체";
+}
+const ext = 'target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer"';
+
+/* ---------- 화면: 공통 ---------- */
+function countOf(m){
+  if(m.type==="sites") return SITES.length;
+  if(m.type==="calc") return "";
+  return (DATA[m.id]||[]).length || "";
+}
+function renderNav(){
+  document.getElementById("nav").innerHTML = MENU.map(m=>{
+    const ic = m.emoji ? `<span class="ic-emoji">${esc(m.emoji)}</span>` : ICONS[m.ic||"folder"];
+    const c = countOf(m);
+    return `<button class="nav-i ${m.id===mode?"on":""}" data-m="${esc(m.id)}">${ic}<span>${esc(m.label)}</span>${c?`<em>${c}</em>`:""}</button>`;
+  }).join("");
+}
+function renderToday(){
+  const now=new Date(), m=now.getMonth()+1;
+  document.getElementById("todayH").innerHTML = `${m}월 신고기한 <span>${now.getMonth()+1}.${now.getDate()}</span>`;
+  document.getElementById("today").innerHTML = DEADLINES[m].map(x=>`<li>${esc(x)}</li>`).join("");
+}
+function renderControls(){
+  const m=cur();
+  renderNav();
+  document.getElementById("crumb").textContent = m.label;
+  document.getElementById("title").textContent = m.label;
+  document.getElementById("subtitle").textContent = m.desc || "";
+  document.getElementById("q").placeholder = m.ph || `${m.label} 검색`;
+  const isCalc = m.type==="calc";
+  document.getElementById("searchBox").classList.toggle("hidden", isCalc);
+  document.getElementById("list").classList.toggle("hidden", isCalc);
+  document.getElementById("calcBox").classList.toggle("hidden", !isCalc);
+  const tabs=document.getElementById("tabs");
+  tabs.classList.toggle("hidden", m.type!=="sites");
+  tabs.innerHTML = CATS.map(c=>`<button class="subtab ${c===cat?'on':''}" data-c="${esc(c)}">${esc(c)}</button>`).join("");
+}
+
+/* ---------- 사이트 ---------- */
+function siteRow(s){
+  const on=favs.includes(s.n);
+  return `<tr>
+    <td class="c-star"><button class="star ${on?'on':''}" data-n="${esc(s.n)}" aria-label="즐겨찾기">${on?'★':'☆'}</button></td>
+    <td class="c-name"><a href="${esc(s.u)}" ${ext}>${esc(s.n)}</a><div class="surl">${esc(s.u.replace(/^https?:\/\//,"").replace(/\/$/,""))}</div></td>
+    <td class="c-act"><a class="btn-open" href="${esc(s.u)}" ${ext}>열기 ↗</a></td>
+    <td class="c-desc">${esc(s.d)}</td>
+    <td class="c-tags">${s.t.map(t=>`<span class="tag">${esc(t)}</span>`).join("")}</td>
+  </tr>`;
+}
+function siteTable(title, list){
+  return `<div class="panel"><div class="panel-h">${title} <span class="n">${list.length}</span></div>
+    <table class="tbl"><thead><tr><th></th><th>사이트</th><th></th><th>주요 업무</th><th class="h-tags">키워드</th></tr></thead>
+    <tbody>${list.map(siteRow).join("")}</tbody></table></div>`;
+}
+function renderSites(q){
+  const match=s=>!q||(s.n+s.d+s.t.join(" ")+s.u+s.c).toLowerCase().includes(q);
+  let html="";
+  const favSites=SITES.filter(s=>favs.includes(s.n)&&match(s));
+  if(favSites.length&&cat==="전체") html+=siteTable("★ 자주 쓰는 사이트", favSites);
+  for(const c of (cat==="전체"?CATS.slice(1):[cat])){
+    const list=SITES.filter(s=>s.c===c&&match(s));
+    if(list.length) html+=siteTable(esc(c), list);
+  }
+  return html;
+}
+
+/* ---------- 절차 (목록 + 상세) ---------- */
+const LAB_ORDER = ["포함","제외","예외","주의","회사","참고"];
+const LAB_NAME  = {"포함":"포함","제외":"제외","예외":"예외","주의":"주의","회사":"회사 방식","참고":"참고"};
+function chips(p){
+  const n=p.steps.filter(x=>!x[3]).length;
+  let h = n?`<span class="chip ch-원칙">${n}단계</span>`:"";
+  for(const l of LAB_ORDER){ const c=p.steps.filter(x=>x[3]===l).length; if(c) h+=`<span class="chip ch-${l}">${LAB_NAME[l]} ${c}</span>`; }
+  return h;
+}
+function siteTag(name){
+  const site=findSite(name);
+  if(!site) return "";
+  return site.u ? `<a class="stag" href="${esc(site.u)}" ${ext}>${esc(site.n)}</a>` : `<span class="stag plain">${esc(site.n)}</span>`;
+}
+function renderProcs(q, SRC){
+  SRC = SRC || [];
+  const match=p=>!q||(p.n+p.d+p.steps.map(s=>s.join(" ")).join(" ")).toLowerCase().includes(q);
+  const list=SRC.filter(match);
+  if(!list.length) return "";
+  let p = list.find(x=>x.n===sel[mode]) || list[0];
+  const items = list.map(x=>`<button class="mitem ${x===p?"on":""}" data-p="${esc(x.n)}">
+      <div class="t">${esc(x.n)}</div>${x.d?`<div class="s">${esc(x.d)}</div>`:""}<div class="m">${chips(x)}</div></button>`).join("");
+  const main=p.steps.filter(x=>!x[3]);
+  let body="";
+  if(main.length){
+    body+=`<div class="d-sec"><ol class="steps">${main.map(s=>`<li><div class="sl">${siteTag(s[0])}<b>${esc(s[1])}</b></div>${s[2]?`<div class="sn">${esc(s[2])}</div>`:""}</li>`).join("")}</ol></div>`;
+  }
+  const inc=p.steps.filter(x=>x[3]==="포함"), exc=p.steps.filter(x=>x[3]==="제외");
+  if(inc.length||exc.length){
+    const col=(rows,cls,title)=>`<div class="ie ${cls}"><h4>${title} <span class="n">${rows.length}</span></h4><ul>${rows.map(s=>`<li><b>${esc(s[1])}</b>${s[2]?`<span>${esc(s[2])}</span>`:""}</li>`).join("")}</ul></div>`;
+    body+=`<div class="d-sec"><div class="ie-wrap">${col(inc,"in","✅ 포함")}${col(exc,"ex","❌ 제외")}</div></div>`;
+  }
+  const labs=[...LAB_ORDER.filter(l=>l!=="포함"&&l!=="제외"), ...new Set(p.steps.map(x=>x[3]).filter(l=>l&&!LAB_ORDER.includes(l)))];
+  for(const l of labs){
+    const rows=p.steps.filter(x=>x[3]===l); if(!rows.length) continue;
+    body+=`<div class="d-sec"><h4><span class="chip ch-${esc(l)}">${esc(LAB_NAME[l]||l)}</span></h4><ul class="notes">${rows.map(s=>`<li>${s[0]?siteTag(s[0])+" ":""}<b>${esc(s[1])}</b>${s[2]?` — ${esc(s[2])}`:""}</li>`).join("")}</ul></div>`;
+  }
+  return `<div class="md">
+    <div class="panel mlist"><div class="panel-h">목록 <span class="n">${list.length}</span></div>${items}</div>
+    <div class="panel detail" id="detail"><div class="d-head"><h2>${esc(p.n)}</h2>${p.d?`<p>${esc(p.d)}</p>`:""}</div>${body}</div>
+  </div>`;
+}
+
+/* ---------- 서류 ---------- */
+function renderDocs(q, SRC){
+  SRC = SRC || [];
+  const match=d=>!q||d.join(" ").toLowerCase().includes(q);
+  const groups=new Map();
+  SRC.filter(match).forEach(d=>{ if(!groups.has(d[0])) groups.set(d[0],[]); groups.get(d[0]).push(d); });
+  if(!groups.size) return "";
+  let html='<div class="docs">';
+  for(const [g,list] of groups){
+    html+=`<div class="panel"><div class="panel-h">${esc(g)} <span class="n">${list.length}</span></div><table class="tbl"><tbody>`+list.map(d=>{
+      const link = d[5] ? {n:"바로가기", u:d[5]} : findSite(d[4]);
+      const isFile = /flDownload|\.(hwp|hwpx|pdf|docx?|xlsx?)(\?|$)/i.test(d[5]||"");
+      const isForm = /%EB%B2%95%EB%A0%B9%EB%B3%84%ED%91%9C%EC%84%9C%EC%8B%9D|법령별표서식/.test(d[5]||"");
+      const label = !d[5] ? (link&&link.n) : isFile ? "서식 다운로드" : isForm ? "한글·PDF 받기" : "서식·안내 페이지";
+      const local = isFile && !/^https?:/.test(d[5]||"");
+      const btn = link&&link.u ? `<a class="btn-open${isForm||isFile?" pri":""}" href="${esc(link.u)}" ${local?`download="${esc(d[1].replace(/[\\/:*?"<>|\[\]]/g,"").trim())}.docx"`:ext}>${esc(label)}${local?" ⬇":" ↗"}</a>`
+                : link ? `<span class="site-chip plain">${esc(link.n)}</span>` : "";
+      const kind=d[2]||"안내";
+      return `<tr><td class="c-kind"><span class="kind k-${esc(kind)}">${esc(kind)}</span></td>
+        <td><div class="dname">${esc(d[1])}</div>${d[3]?`<div class="dlaw">${esc(d[3])}</div>`:""}</td>
+        <td class="c-dnote">${esc(d[6])}</td><td class="c-dl">${btn}</td></tr>`;
+    }).join("")+`</tbody></table></div>`;
+  }
+  return html+"</div>";
+}
+
+function render(){
+  const q=document.getElementById("q").value.trim().toLowerCase();
+  const m=cur();
+  const html = m.type==="sites" ? renderSites(q) : m.type==="procs" ? renderProcs(q, DATA[m.id]) : m.type==="docs" ? renderDocs(q, DATA[m.id]) : "";
+  document.getElementById("list").innerHTML = html || `<div class="empty">검색 결과가 없습니다.</div>`;
+}
+function go(id){
+  if(!MENU.some(m=>m.id===id)) return;
+  mode=id; store.set("taxMode",mode);
+  try{ history.replaceState(null,"","#"+mode); }catch(err){}
+  renderControls(); render(); window.scrollTo(0,0);
+}
+
+/* ---------- 이벤트 ---------- */
+document.getElementById("nav").addEventListener("click",e=>{
+  const b=e.target.closest(".nav-i"); if(b) go(b.dataset.m);
+});
+document.getElementById("tabs").addEventListener("click",e=>{
+  const b=e.target.closest(".subtab"); if(!b) return;
+  cat=b.dataset.c; store.set("taxCat",cat); renderControls(); render();
+});
+document.getElementById("list").addEventListener("click",e=>{
+  const st=e.target.closest(".star");
+  if(st){ e.preventDefault(); const n=st.dataset.n; favs=favs.includes(n)?favs.filter(x=>x!==n):[...favs,n]; store.set("taxFavs",favs); render(); return; }
+  const it=e.target.closest(".mitem");
+  if(it){
+    sel[mode]=it.dataset.p; store.set("taxSel",sel); render();
+    if(window.innerWidth<=900){ const d=document.getElementById("detail"); if(d) d.scrollIntoView({behavior:"smooth",block:"start"}); }
+  }
+});
+document.getElementById("q").addEventListener("input",render);
+document.addEventListener("keydown",e=>{
+  if(e.key==="/" && !/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)){ e.preventDefault(); document.getElementById("q").focus(); }
+  if(e.key==="Escape" && document.activeElement.id==="q"){ e.target.value=""; render(); e.target.blur(); }
+});
+window.addEventListener("hashchange",()=>{ const h=hashId(); if(h!==mode) go(h); });
+
+/* ============================================================
+   급여 계산기 (2026년 기준)
+   ============================================================ */
+const RATE = {
+  nps:0.0475, npsMin:410000, npsMax:6590000,      // 국민연금 근로자 4.75%, 기준소득월액 41만~659만 (2026.7~2027.6)
+  nhis:0.0719, ltc:0.009448,                        // 건강보험 7.19%(근로자 절반), 장기요양 0.9448% (=건보료의 13.14%)
+  ei:0.009                                          // 고용보험 근로자 0.9%
+};
+const f10 = x => Math.floor(x/10)*10;              // 10원 미만 절사
+const won = x => Math.round(x).toLocaleString("ko-KR")+"원";
+const num = s => parseInt(String(s).replace(/[^\d]/g,""),10)||0;
+
+function insurance(base, opt){
+  const npsBase = Math.min(Math.max(Math.floor(base/1000)*1000, RATE.npsMin), RATE.npsMax);
+  const nps  = opt.nps  && base>0 ? f10(npsBase*RATE.nps) : 0;
+  const nhis = opt.nhis && base>0 ? f10(base*RATE.nhis/2) : 0;
+  const ltc  = opt.nhis && base>0 ? f10(nhis*RATE.ltc/RATE.nhis) : 0;
+  const ei   = opt.ei   && base>0 ? f10(base*RATE.ei) : 0;
+  return {nps,nhis,ltc,ei,total:nps+nhis+ltc+ei};
+}
+
+/* 근로소득 간이세액표 산식(소득세법 시행령 별표2 작성방법)에 따른 추정 */
+function earnedDeduction(T){
+  let d;
+  if(T<=5e6) d=T*0.7;
+  else if(T<=15e6) d=3.5e6+(T-5e6)*0.4;
+  else if(T<=45e6) d=7.5e6+(T-15e6)*0.15;
+  else if(T<=1e8) d=12e6+(T-45e6)*0.05;
+  else d=14.75e6+(T-1e8)*0.02;
+  return Math.min(d,2e7);
+}
+function specialDeduction(T,n){
+  const a = n<=1?[3.1e6,0.04,0.015,0.005] : n===2?[3.6e6,0.04,0.02,0.01] : [5e6,0.07,0.05,0.03];
+  if(T<=3e7)  return a[0]+T*a[1]+(n>=3?Math.max(T-4e7,0)*0.04:0);
+  if(T<=4.5e7) return a[0]+T*a[1]-(T-3e7)*0.05+(n>=3?Math.max(T-4e7,0)*0.04:0);
+  if(T<=7e7)  return a[0]+T*a[2];
+  return a[0]+T*a[3];
+}
+function progressive(base){
+  const B=[[14e6,.06,0],[5e7,.15,1.26e6],[8.8e7,.24,5.76e6],[1.5e8,.35,15.44e6],[3e8,.38,19.94e6],[5e8,.40,25.94e6],[1e9,.42,35.94e6],[Infinity,.45,65.94e6]];
+  for(const [lim,r,c] of B) if(base<=lim) return Math.max(base*r-c,0);
+}
+function earnedCredit(calc,T){
+  const c = calc<=1.3e6 ? calc*0.55 : 715000+(calc-1.3e6)*0.3;
+  let lim;
+  if(T<=3.3e7) lim=740000;
+  else if(T<=7e7) lim=Math.max(740000-(T-3.3e7)*0.008,660000);
+  else if(T<=1.2e8) lim=Math.max(660000-(T-7e7)*0.005,500000);
+  else lim=Math.max(500000-(T-1.2e8)*0.005,200000);
+  return Math.min(c,lim);
+}
+function simpleTax(monthly, n, ratio){
+  if(monthly<1060000) return 0;
+  const w = monthly<1.5e6?5000 : monthly<3e6?10000 : 20000;
+  const mid = Math.floor(monthly/w)*w + w/2;
+  const T = mid*12;
+  const npsBase = Math.min(Math.max(Math.floor(mid/1000)*1000, RATE.npsMin), RATE.npsMax);
+  const pension = npsBase*0.045*12;   // 현행 간이세액표는 국민연금 4.5% 기준으로 작성됨
+  const base = Math.max(T-earnedDeduction(T)-1.5e6*n-pension-specialDeduction(T,n),0);
+  const calc = progressive(base);
+  const annual = Math.max(calc-earnedCredit(calc,T),0);
+  return f10(annual/12);
+}
+function childCredit(k){ return k<=0?0 : k===1?20830 : 45830+(k-2)*33330; }  // 8세 이상 20세 이하 자녀
+function workTax(monthly,n,kids,ratio){
+  return f10(Math.max(simpleTax(monthly,n)-childCredit(kids),0)*ratio);
+}
+
+function compute(kind, gross, o){
+  if(kind==="work"){
+    const taxable=Math.max(gross-o.nontax,0);
+    const ins=insurance(taxable,o);
+    const tax=workTax(taxable,o.fam,o.kids,o.ratio);
+    const local=f10(tax*0.1);
+    return {gross, rows:[["국민연금",ins.nps],["건강보험",ins.nhis],["장기요양",ins.ltc],["고용보험",ins.ei],["소득세",tax],["지방소득세",local]],
+            ded:ins.total+tax+local, net:gross-ins.total-tax-local};
+  }
+  if(kind==="biz"){
+    let tax=f10(gross*0.03); if(tax<1000) tax=0;   // 소액부징수
+    const local=f10(tax*0.1);
+    return {gross, rows:[["소득세 (3%)",tax],["지방소득세 (0.3%)",local]], ded:tax+local, net:gross-tax-local};
+  }
+  // 기타소득
+  const income=gross*(1-o.etcExp);
+  let tax = income<=50000 ? 0 : f10(income*0.2);   // 과세최저한: 기타소득금액 5만원 이하
+  if(tax<1000) tax=0;
+  const local=f10(tax*0.1);
+  return {gross, rows:[["필요경비",-(gross-Math.floor(income)),"sub"],["기타소득금액",Math.floor(income),"sub"],["소득세 (20%)",tax],["지방소득세 (2%)",local]], ded:tax+local, net:gross-tax-local};
+}
+
+/* 세후 → 세전: 실수령액이 목표 이상이 되는 가장 작은 세전 금액 */
+function solve(kind, target, o){
+  const net=g=>compute(kind,g,o).net;
+  if(net(target)>=target) return target;           // 공제가 없는 구간
+  let lo=target, hi=target*2+100000;
+  while(net(hi)<target) hi*=2;
+  while(hi-lo>1){ const m=Math.floor((lo+hi)/2); if(net(m)>=target) hi=m; else lo=m; }
+  const win = kind==="work" ? 40000 : 2000;        // 구간·절사 때문에 생기는 계단 보정
+  for(let g=Math.max(target,hi-win); g<=hi; g++) if(net(g)>=target) return g;
+  return hi;
+}
+
+let cKind="work", cDir="rev";
+function calcRender(){
+  const amt=num(document.getElementById("amt").value);
+  const o={
+    nontax:num(document.getElementById("nontax").value),
+    fam:parseInt(document.getElementById("fam").value,10)||1,
+    kids:parseInt(document.getElementById("kids").value,10)||0,
+    ratio:parseFloat(document.getElementById("ratio").value)||1,
+    nps:document.getElementById("iNps").checked,
+    nhis:document.getElementById("iNhis").checked,
+    ei:document.getElementById("iEi").checked,
+    etcExp:parseFloat(document.getElementById("etcExp").value)
+  };
+  document.getElementById("workOpts").classList.toggle("hidden",cKind!=="work");
+  document.getElementById("etcOpts").classList.toggle("hidden",cKind!=="etc");
+  document.getElementById("amtLabel").textContent = cDir==="rev" ? "실수령액 (세후)" : "지급액 (세전)";
+  document.getElementById("amtHint").textContent = cKind==="work"
+    ? (cDir==="rev"?"비과세 포함, 통장에 들어오는 금액":"비과세 포함 총 지급액")
+    : (cDir==="rev"?"받는 사람에게 실제로 줄 금액":"계약상 지급 총액");
+  const box=document.getElementById("calcResult");
+  if(!amt){ box.innerHTML=""; return; }
+  if(cKind==="work" && o.nontax>amt && cDir==="fwd"){ box.innerHTML=`<div class="cnote">비과세 금액이 지급액보다 큽니다.</div>`; return; }
+
+  const gross = cDir==="rev" ? solve(cKind,amt,o) : amt;
+  const r=compute(cKind,gross,o);
+  const label = {work:"근로소득",biz:"사업소득",etc:"기타소득"}[cKind];
+  const rows=r.rows.filter(x=>cKind!=="work"||x[1]!==0||x[0]==="소득세");
+  const diff = cDir==="rev" ? r.net-amt : 0;
+
+  let notes=[];
+  if(cKind==="work"){
+    notes.push("4대보험: 국민연금 4.75%(기준소득월액 41만~659만원), 건강 3.595%, 장기요양 건보료의 13.14%, 고용 0.9% · 각 10원 미만 절사.");
+    notes.push("소득세는 간이세액표 작성 산식으로 계산한 <b>추정치</b>입니다. 표와 수십 원 차이가 날 수 있으니 신고 전 홈택스 '근로소득 간이세액표'로 확인하세요.");
+    if(o.kids) notes.push(`자녀 ${o.kids}명 공제 ${won(childCredit(o.kids))}을 간이세액표 금액에서 뺐습니다.`);
+    if(gross-o.nontax>1e7) notes.push("⚠️ 과세급여 월 1천만원 초과는 간이세액표 별도 산식이 적용돼 이 계산이 맞지 않습니다.");
+  } else if(cKind==="biz"){
+    notes.push("소득세 3% + 지방소득세 0.3%. 소득세가 1,000원 미만이면 징수하지 않습니다(소액부징수).");
+  } else {
+    notes.push("기타소득금액(지급액 − 필요경비)이 5만원 이하면 과세하지 않습니다(과세최저한).");
+  }
+  if(diff>0) notes.push(`10원 단위 절사·세액 구간 때문에 실수령액이 목표보다 ${won(diff)} 많게 나옵니다.`);
+
+  box.innerHTML = `<div class="result">
+    <div class="big"><span>${cDir==="rev"?"세전 지급액":"실수령액"}</span><b>${won(cDir==="rev"?r.gross:r.net)}</b></div>
+    <table class="rtable">
+      <tr><td>세전 지급액${cKind==="work"&&o.nontax?` <span style="color:var(--muted);font-size:12px">(비과세 ${won(o.nontax)} 포함)</span>`:""}</td><td>${won(r.gross)}</td></tr>
+      ${rows.map(x=>`<tr class="${x[2]||""}"><td>${x[0]}</td><td>${x[2]?won(x[1]):"− "+won(x[1])}</td></tr>`).join("")}
+      <tr><td>공제 합계</td><td>− ${won(r.ded)}</td></tr>
+      <tr class="total"><td>실수령액</td><td>${won(r.net)}</td></tr>
+    </table>
+    <button class="copy" id="copyBtn">결과 복사</button>
+    <div class="cnote">${notes.map(n=>"· "+n).join("<br>")}</div>
+  </div>`;
+  document.getElementById("copyBtn").onclick=async e=>{
+    const txt=`[${label}] 세전 ${won(r.gross)} / `+rows.filter(x=>!x[2]).map(x=>`${x[0]} ${won(x[1])}`).join(", ")+` / 공제계 ${won(r.ded)} / 실수령 ${won(r.net)}`;
+    try{ await navigator.clipboard.writeText(txt); e.target.textContent="복사됨 ✓"; }
+    catch(err){ e.target.textContent="복사 실패 — 직접 선택해 복사하세요"; }
+    setTimeout(()=>{ e.target.textContent="결과 복사"; },1800);
+  };
+}
+document.getElementById("fam").innerHTML=Array.from({length:11},(_,i)=>`<option value="${i+1}">${i+1}명</option>`).join("");
+document.getElementById("kind").addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b) return;
+  cKind=b.dataset.k; document.querySelectorAll("#kind button").forEach(x=>x.classList.toggle("on",x===b)); calcRender();
+});
+document.getElementById("dir").addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b) return;
+  cDir=b.dataset.d; document.querySelectorAll("#dir button").forEach(x=>x.classList.toggle("on",x===b)); calcRender();
+});
+["amt","nontax"].forEach(id=>document.getElementById(id).addEventListener("input",e=>{
+  const v=num(e.target.value); e.target.value = v ? v.toLocaleString("ko-KR") : (id==="nontax"?"0":"");
+  calcRender();
+}));
+["fam","kids","ratio","iNps","iNhis","iEi","etcExp"].forEach(id=>document.getElementById(id).addEventListener("change",calcRender));
+
+/* ---------- 구글 시트 불러오기 ---------- */
+/* ---------- 구글 시트 불러오기 ---------- */
+function parseCSV(text){
+  const rows=[]; let row=[], cell="", q=false;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i];
+    if(q){ if(ch==='"'){ if(text[i+1]==='"'){cell+='"';i++;} else q=false; } else cell+=ch; }
+    else if(ch==='"') q=true;
+    else if(ch===','){ row.push(cell); cell=""; }
+    else if(ch==='\n'){ row.push(cell); rows.push(row); row=[]; cell=""; }
+    else if(ch!=='\r') cell+=ch;
+  }
+  if(cell!==""||row.length){ row.push(cell); rows.push(row); }
+  return rows.map(r=>r.map(c=>c.replace(/^﻿/,"").trim()));
+}
+function gvizJsonp(url){
+  // fetch가 막힐 때 쓰는 예비 방식: 구글 시트를 <script>로 불러옴
+  return new Promise((resolve,reject)=>{
+    const cb="gv"+Math.random().toString(36).slice(2);
+    const src=url.replace("tqx=out:csv","headers=1&tqx=responseHandler:"+cb)+"&t="+Date.now();
+    const el=document.createElement("script");
+    const done=()=>{ try{ delete window[cb]; }catch(e){ window[cb]=undefined; } el.remove(); };
+    const timer=setTimeout(()=>{ done(); reject(new Error("timeout")); },10000);
+    window[cb]=d=>{
+      clearTimeout(timer); done();
+      if(!d||d.status==="error"||!d.table){ reject(new Error("gviz error")); return; }
+      resolve(d.table.rows.map(r=>(r.c||[]).map(c=>c==null?"":String(c.v==null?(c.f||""):c.v).trim())));
+    };
+    el.onerror=()=>{ clearTimeout(timer); done(); reject(new Error("script error")); };
+    el.src=src; document.head.appendChild(el);
+  });
+}
+let SYNC={ok:0,fail:0};
+async function fetchCSV(url, quiet){
+  try{
+    const res=await fetch(url+(url.includes("?")?"&":"?")+"t="+Date.now(),{cache:"no-store"});
+    if(!res.ok) throw new Error(res.status);
+    const rows=parseCSV(await res.text()).slice(1);
+    if(!quiet) SYNC.ok++; return rows;
+  }catch(e){
+    try{ const rows=await gvizJsonp(url); if(!quiet) SYNC.ok++; return rows; }
+    catch(e2){ if(!quiet) SYNC.fail++; throw e2; }
+  }
+}
+function showSync(){
+  const el=document.getElementById("sync"); if(!el) return;
+  const t=new Date(); const hm=String(t.getHours()).padStart(2,"0")+":"+String(t.getMinutes()).padStart(2,"0");
+  el.textContent = SYNC.fail===0&&SYNC.ok>0 ? `🟢 구글 시트 연결됨 · ${hm}`
+    : SYNC.ok>0 ? `🟡 일부 탭만 연결됨 · ${hm}` : `🔴 시트 연결 안 됨 · 기본 목록 표시 중`;
+}
+
+function toProcs(rows){
+  const map=new Map(); let last=null;
+  for(const r of rows){
+    const name=r[0]||last; if(!name) continue; last=name;   // 이름 칸을 비우면 윗줄에 이어짐
+    if(!map.has(name)) map.set(name,{n:name,d:r[1]||"",steps:[]});
+    const p=map.get(name); if(!p.d&&r[1]) p.d=r[1];
+    if(r[4]){ const nn=parseFloat(r[2]); const lab=isNaN(nn)?(r[2]||"").trim():""; p.steps.push({o:isNaN(nn)?1000+p.steps.length:nn, s:[r[3]||"",r[4],r[5]||"",lab]}); }
+  }
+  return [...map.values()].filter(p=>p.steps.length).map(p=>({n:p.n,d:p.d,steps:p.steps.sort((a,b)=>a.o-b.o).map(x=>x.s)}));
+}
+const toDocs = rows => rows.filter(r=>r[0]&&r[1]).map(r=>[0,1,2,3,4,5,6].map(i=>r[i]||""));
+
+
+/* ---------- 할 일 (시트 '할일' 탭: 날짜 | 할 일 | 메모 | 완료) ---------- */
+let TODOS = [];
+function parseDay(t){
+  const m=String(t||"").match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})/);
+  return m ? new Date(+m[1], +m[2]-1, +m[3]) : null;
+}
+function renderTodo(){
+  const box=document.getElementById("todo");
+  const today=new Date(); today.setHours(0,0,0,0);
+  const list=TODOS.map(r=>({d:parseDay(r[0]),t:r[1]||"",m:r[2]||"",done:/^(o|O|ㅇ|완료|v|V|✓|y|Y|TRUE)$/.test((r[3]||"").trim())}))
+    .filter(x=>x.d&&x.t&&!x.done).sort((a,b)=>a.d-b.d);
+  if(!list.length){ box.innerHTML=""; return; }
+  const W="일월화수목금토";
+  box.innerHTML=`<div class="todo"><div class="todo-h">📌 내 할 일 <span class="n">${list.length}</span><small>완료하면 시트 '할일' 탭 완료 칸에 O</small></div><ul>`+
+    list.map(x=>{
+      const diff=Math.round((x.d-today)/86400000);
+      const lab = diff===0?"오늘":diff>0?`D-${diff}`:`${-diff}일 지남`;
+      const cls = diff<=1?"urgent":diff<=7?"soon":"";
+      return `<li><span class="dday ${cls}">${lab}</span><span class="tdate">${x.d.getMonth()+1}.${x.d.getDate()} (${W[x.d.getDay()]})</span><span class="ttxt">${esc(x.t)}${x.m?`<span>${esc(x.m)}</span>`:""}</span></li>`;
+    }).join("")+`</ul></div>`;
+}
+
+async function loadSheets(){
+  const jobs = [
+    fetchCSV(SHEET_CSV_URL).then(rows=>{
+      const list=rows.map(r=>({c:r[0]||"",n:r[1]||"",u:r[2]||"",d:r[3]||"",t:(r[4]||"").split(/[,\/]/).map(x=>x.trim()).filter(Boolean)})).filter(s=>s.c&&s.n&&s.u);
+      list.forEach(s=>{ if(!/^https?:\/\//.test(s.u)) s.u="https://"+s.u; });
+      if(list.length){ SITES=list; refreshCats(); }
+    }),
+    fetchCSV(PROC_CSV_URL).then(rows=>{ const l=toProcs(rows); if(l.length) PROCS=l; }),
+    fetchCSV(SAMU_CSV_URL).then(rows=>{ const l=toProcs(rows); if(l.length) SAMU=l; }),
+    fetchCSV(DOCS_CSV_URL).then(rows=>{ const l=toDocs(rows); if(l.length) DOCS=l; }),
+  ];
+  const res = await Promise.allSettled(jobs);
+  res.forEach(r=>{ if(r.status==="rejected") console.warn("시트를 못 불러와 기본 목록을 씁니다.", r.reason); });
+  syncData();
+
+  // '메뉴' 탭에 적힌 추가 메뉴 (파일을 다시 올리지 않아도 메뉴가 생김)
+  try{
+    const rows = await fetchCSV(tabURL(MENU_TAB), true);
+    const extras = rows.filter(r=>r[0]&&r[1]&&/^(절차|서류|)$/.test((r[3]||"").trim()));
+    const loaded = await Promise.allSettled(extras.map(r=>fetchCSV(tabURL(r[1]), true)));
+    extras.forEach((r,i)=>{
+      if(loaded[i].status!=="fulfilled") return;
+      const isDocs=(r[3]||"").trim()==="서류";
+      const raw = loaded[i].value;
+      // 없는 탭 이름이면 구글이 첫 탭을 돌려줄 수 있어 형식 검사
+      const okFmt = isDocs ? raw.some(x=>/^(서식|첨부|발급|안내)$/.test(x[2]||"")) : raw.some(x=>/^\d+(\.\d+)?$/.test((x[2]||"").trim()));
+      if(!okFmt) return;
+      const data = isDocs ? toDocs(raw) : toProcs(raw);
+      if(!data.length) return;
+      const id="t-"+r[1];
+      MENU = MENU.filter(m=>m.id!==id);
+      MENU.splice(MENU.length-1, 0, {id, label:r[0], type:isDocs?"docs":"procs", ic:isDocs?"docs":"folder", emoji:(r[2]||"").trim(), desc:r[1]+" 탭에서 불러옴", ph:r[0]+" 검색"});
+      DATA[id]=data;
+    });
+    if(MENU.some(m=>m.id===wanted) && mode!==wanted) mode=wanted;
+  }catch(e){ /* 메뉴 탭이 없으면 기본 메뉴만 */ }
+
+  try{
+    const rows = await fetchCSV(tabURL("할일"), true);
+    if(rows.every(r=>!r[0] || parseDay(r[0]))) TODOS = rows;   // 날짜 형식이 맞을 때만 (없는 탭이면 무시)
+  }catch(e){}
+  renderTodo(); renderControls(); render(); showSync();
+}
+
+refreshCats(); renderToday(); renderTodo(); renderControls(); render(); loadSheets();
+</script>
+</body>
+</html>
