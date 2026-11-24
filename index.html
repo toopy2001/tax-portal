@@ -162,7 +162,7 @@
   .iline:first-child{border-top:none}
   .iline>b{flex:none;width:64px;font-size:12.5px} .iline.in>b{color:var(--ok)} .iline.ex>b{color:var(--red)}
   .iline span{flex:1;min-width:0;line-height:1.9} .iline i{font-style:normal;white-space:nowrap}
-  .iline i+i::before{content:" · ";color:var(--mute)}
+  .iline i+i::before{content:"· ";color:var(--mute)}
   .dlegend{display:flex;gap:6px;align-items:center;padding:10px 18px;border-bottom:1px solid var(--line);background:var(--head)}
   .dlegend .hint{margin-left:auto;font-size:12px}
   .drow{display:grid;grid-template-columns:170px minmax(0,1fr);gap:12px;padding:11px 18px;border-top:1px solid var(--line2);align-items:baseline}
@@ -697,7 +697,7 @@ function renderProcs(q, SRC){
   }
   const inc=p.steps.filter(x=>x[3]==="포함"), exc=p.steps.filter(x=>x[3]==="제외");
   if(inc.length||exc.length){
-    const line=(rows,cls,title)=>rows.length?`<div class="iline ${cls}"><b>${title}</b><span>${rows.map(s=>`<i title="${esc(s[2]||"")}">${esc(s[1])}</i>`).join("")}</span></div>`:"";
+    const line=(rows,cls,title)=>rows.length?`<div class="iline ${cls}"><b>${title}</b><span>${rows.map(s=>`<i title="${esc(s[2]||"")}">${esc(s[1])}</i>`).join(" ")}</span></div>`:"";
     body+=`<div class="d-sec">${line(inc,"in","✅ 포함")}${line(exc,"ex","❌ 제외")}</div>`;
   }
   const labs=[...LAB_ORDER.filter(l=>l!=="포함"&&l!=="제외"), ...new Set(p.steps.map(x=>x[3]).filter(l=>l&&!LAB_ORDER.includes(l)))];
