@@ -208,6 +208,30 @@
   .ttxt{font-weight:600;font-size:14px}
   .ttxt span{font-weight:400;color:var(--mute);font-size:12.5px;margin-left:6px}
   @media (max-width:900px){ .todo li{grid-template-columns:64px minmax(0,1fr)} .tdate{display:none} }
+  /* 카드 분류 */
+  .cardwrap{display:grid;grid-template-columns:340px minmax(0,1fr);gap:16px;align-items:start}
+  .drop{border:2px dashed #c9d3e6;border-radius:10px;padding:22px 14px;text-align:center;color:var(--mute);cursor:pointer;background:var(--head);font-size:13px}
+  .drop.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+  .drop b{display:block;color:var(--ink);font-size:14px;margin-bottom:4px}
+  .drop .fn{margin-top:8px;color:var(--accent);font-weight:600;word-break:break-all}
+  .secure{font-size:12px;color:var(--ok);background:var(--ok-soft);border-radius:8px;padding:8px 10px;margin-top:12px;line-height:1.6}
+  .runbtn{width:100%;padding:11px;border:none;border-radius:8px;background:var(--accent);color:#fff;font:700 14px inherit;cursor:pointer;margin-top:4px}
+  .runbtn:disabled{background:#a9b6d3;cursor:default}
+  .dlbtn{padding:9px 16px;border:1px solid var(--ink);border-radius:8px;background:var(--ink);color:#fff;font:600 13px inherit;cursor:pointer}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+  .kpi span{display:block;font-size:12px;color:var(--mute)} .kpi b{font-size:22px;letter-spacing:-.02em}
+  .kpi.red b{color:var(--red)} .kpi.yel b{color:var(--warn)}
+  .ctbl{width:100%;border-collapse:collapse;font-size:12.5px}
+  .ctbl th{position:sticky;top:0;background:var(--head);font-size:11.5px;color:var(--mute);text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+  .ctbl td{padding:7px 10px;border-top:1px solid var(--line2);vertical-align:top}
+  .ctbl td{white-space:nowrap} .ctbl td:last-child{white-space:normal;min-width:180px}
+  .ctbl td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .ctbl tr.r-big td{background:#fde4d8} .ctbl tr.r-chk td{background:#fff6dc} .ctbl tr.r-nd td{color:#6b7385}
+  .cscroll{max-height:560px;overflow:auto}
+  .cerr{color:var(--red);background:var(--red-soft);border-radius:8px;padding:10px 12px;font-size:13px;margin-top:10px}
+  .cmsg{color:var(--mute);padding:40px 0;text-align:center}
+  @media (max-width:900px){ .cardwrap{grid-template-columns:1fr} .kpis{grid-template-columns:repeat(2,1fr)} }
   footer{margin-top:30px;color:var(--mute);font-size:12px;border-top:1px solid var(--line);padding-top:14px}
 
   /* ── 좁은 화면 (휴대폰) ── */
@@ -343,7 +367,42 @@
       </div>
     </div>
 
-    <footer>신고기한·절차는 일반적인 기준입니다. 기한이 주말·공휴일이면 다음 영업일로 연장되며, 사이트 메뉴 이름은 개편으로 바뀔 수 있습니다. 내용 수정은 구글 시트에서 합니다. · 화면 버전 2026-11-24 (GitHub 자동 배포)</footer>
+    <div id="cardBox" class="hidden">
+      <div class="cardwrap">
+        <div class="panel">
+          <div class="panel-h">파일 올리기</div>
+          <div class="pbody">
+            <div class="field">
+              <label>① 홈택스 카드 자료 (사업용신용카드 세액공제내역)</label>
+              <div class="drop" id="cDrop"><b>여기로 끌어다 놓거나 눌러서 선택</b>.xls / .xlsx<div class="fn" id="cFn"></div></div>
+              <input type="file" id="cFile" accept=".xls,.xlsx" class="hidden">
+            </div>
+            <div class="field">
+              <label>② 고객사 유형</label>
+              <div class="seg" id="cProf">
+                <button data-p="과세" class="on">과세</button><button data-p="겸영">겸영</button><button data-p="면세">면세</button>
+              </div>
+              <div class="hint">겸영: 식비·주유 공제분을 '공통매입세액'으로 / 면세(병·의원 등): 전부 불공제</div>
+            </div>
+            <div class="row2">
+              <div class="field"><label>업체명 (파일 이름용)</label><input type="text" id="cName" placeholder="예: ○○상사"></div>
+              <div class="field"><label>고액 기준 (원)</label><input type="text" id="cBig" inputmode="numeric" value="300,000"></div>
+            </div>
+            <div class="field">
+              <label>③ 지난 처리 파일 (선택)</label>
+              <input type="file" id="cHist" accept=".xls,.xlsx" multiple style="font-size:12.5px;width:100%">
+              <div class="hint">세무사랑 업로드본이나 공제여부를 표시한 홈택스 자료. 같은 가맹점은 지난번 처리대로 분류</div>
+            </div>
+            <button class="runbtn" id="cRun" disabled>1차 검토 실행</button>
+            <div class="secure">🔒 파일은 서버로 보내지지 않고 지금 이 브라우저 안에서만 처리돼요.</div>
+            <div id="cErr"></div>
+          </div>
+        </div>
+        <div id="cResult"><div class="panel"><div class="cmsg">홈택스 카드 자료를 올리고 '1차 검토 실행'을 누르면 결과가 여기에 나와요.</div></div></div>
+      </div>
+    </div>
+
+    <footer>신고기한·절차는 일반적인 기준입니다. 기한이 주말·공휴일이면 다음 영업일로 연장되며, 사이트 메뉴 이름은 개편으로 바뀔 수 있습니다. 내용 수정은 구글 시트에서 합니다. · 화면 버전 2026-11-24b (카드 분류 추가)</footer>
   </main>
 </div>
 
@@ -416,6 +475,7 @@ const ICONS = {
   procs:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.3"/><circle cx="4.5" cy="12" r="1.3"/><circle cx="4.5" cy="18" r="1.3"/></svg>',
   samu:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>',
   docs:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>',
+  card:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/></svg>',
   calc:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 12h.01M12 12h.01M16 12h.01M8 16h.01M12 16h.01M16 16h.01"/></svg>',
   folder:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>'
 };
@@ -424,6 +484,7 @@ let MENU = [
   {id:"procs", label:"업무 절차",       type:"procs", ic:"procs", desc:"업무별 순서와 예외·주의 요약", ph:"절차 검색 (예: 기준시가, 양도세, 원천세)"},
   {id:"samu",  label:"세무사랑",         type:"procs", ic:"samu",  desc:"세무사랑 Pro 기장·신고 절차와 메뉴 경로, 계정코드", ph:"세무사랑 검색 (예: 취득신고, 기타소득, 매입, 254)"},
   {id:"docs",  label:"서식·서류",        type:"docs",  ic:"docs",  desc:"업무별 필요 서류와 서식 받는 곳", ph:"서류 검색 (예: 사업자등록, 정정, 상실신고)"},
+  {id:"card",  label:"카드 분류",        type:"card",  ic:"card",  desc:"홈택스 카드 자료 1차 검토 · 공제여부·계정코드·세무사랑 붙여넣기용 자동 작성"},
   {id:"calc",  label:"급여 계산기",      type:"calc",  ic:"calc",  desc:"근로·사업·기타소득 세후 ↔ 세전 역산 (2026년 기준)"}
 ];
 const DATA = {};
@@ -464,7 +525,7 @@ const ext = 'target="_blank" rel="noopener noreferrer" referrerpolicy="no-referr
 /* ---------- 화면: 공통 ---------- */
 function countOf(m){
   if(m.type==="sites") return SITES.length;
-  if(m.type==="calc") return "";
+  if(m.type==="calc"||m.type==="card") return "";
   return (DATA[m.id]||[]).length || "";
 }
 function renderNav(){
@@ -486,10 +547,12 @@ function renderControls(){
   document.getElementById("title").textContent = m.label;
   document.getElementById("subtitle").textContent = m.desc || "";
   document.getElementById("q").placeholder = m.ph || `${m.label} 검색`;
-  const isCalc = m.type==="calc";
-  document.getElementById("searchBox").classList.toggle("hidden", isCalc);
-  document.getElementById("list").classList.toggle("hidden", isCalc);
+  const isCalc = m.type==="calc", isCard = m.type==="card";
+  document.getElementById("searchBox").classList.toggle("hidden", isCalc||isCard);
+  document.getElementById("list").classList.toggle("hidden", isCalc||isCard);
   document.getElementById("calcBox").classList.toggle("hidden", !isCalc);
+  document.getElementById("cardBox").classList.toggle("hidden", !isCard);
+  if(isCard) cardLibs();
   const tabs=document.getElementById("tabs");
   tabs.classList.toggle("hidden", m.type!=="sites");
   tabs.innerHTML = CATS.map(c=>`<button class="subtab ${c===cat?'on':''}" data-c="${esc(c)}">${esc(c)}</button>`).join("");
@@ -805,6 +868,229 @@ document.getElementById("dir").addEventListener("click",e=>{
   calcRender();
 }));
 ["fam","kids","ratio","iNps","iNhis","iEi","etcExp"].forEach(id=>document.getElementById(id).addEventListener("change",calcRender));
+
+
+/* ============================================================
+   카드 분류 (홈택스 사업용신용카드 세액공제내역 1차 검토)
+   - 파일은 브라우저 안에서만 처리 (서버 전송 없음)
+   ============================================================ */
+const CARD = (() => {
+  const K = (...w) => new RegExp(w.join("|"));
+  const CAT = [
+    ["교통", K("항공","티머니","버스","택시","철도","코레일","고속","이동의즐거움","에이텍모빌리티","카카오모빌리티","운수","여객","관광（주）|관광\\(주\\)"), 812],
+    ["온라인·상품", K("토스페이먼츠","스마일페이","네이버파이낸셜","엔에이치엔케이씨피","KCP","이니시스","에스에스지페이먼츠","십일번가","11번가","쿠팡","홈쇼핑","^（주）이마트|^\\(주\\)이마트|^주식회사 이마트","다이소","아성","롯데쇼핑","스타필드","백화점","씨제이이엔엠","스마트로","한국정보통신","나이스정보통신","케이에스넷","코페이","섹타나인","전자지급","결제대행","국군복지단","모닝글로리"), 173],
+    ["보험", K("보험（|보험\\(|보험 주식회사|보험주식회사|해상보험|손해보험|생명보험|화재|^보험업|보험．금융|보험　"), 821],
+    ["통신", K("에스케이텔레콤","SK텔레콤","케이티$|주식회사 케이티|（주）케이티|\\(주\\)케이티","엘지유플러스","LG유플러스","전신전화","통신업$"), 814],
+    ["금융수수료", K("금융결제원","카드주식회사","카드 주식회사","신용카드","할부 금융","은행"), 134],
+    ["의료", K("의원","병원","치과","한의원","약국","메디컬","보건","의료","피부과","이비인후과","내과"), 134],
+    ["개인생활", K("노래","PC|피씨|피시","당구","골프","스크린","영화","롯데컬처웍스","CGV|씨지브이","메가박스","스터디카페","헤어","미용","네일","안경","준오","살롱","블루클럽","담배","베이프"), 134],
+    ["차량구입", K("현대자동차","기아 주식회사","기아자동차","자동차제조"), 134],
+    ["차량유지", K("주유","석유","충전소","오일","타이어","칼텍스","에너지（주）|S-OIL|에쓰오일","세차","주차"), 822],
+    ["식비", K("음식","식당","카페","커피","제과","베이커리","파리바게뜨","뚜레쥬르","떡","분식","김밥","치킨","피자","버거","롯데리아","맥도날드","도시락","편의점","씨유","CU","세븐일레븐","지에스25|GS25|GS\\)25|지에스\\(GS","이마트24","우동","국수","음숙","코리아세븐","비지에프","이마트에브리데이","놋그릇","찌개","반점","돈까스","샤브","만두","라면","배스킨","투썸","이디야","스타벅스","메가MGC|메가엠지씨","땅콩빵","해장국","우아한형제들","배달","롯데지알에스","슈퍼마켓","더프레시","마트$|마트 "), 811],
+    ["온라인·상품", K("토스페이먼츠","스마일페이","네이버파이낸셜","엔에이치엔케이씨피","KCP","이니시스","케이지","십일번가","11번가","쿠팡","홈쇼핑","이마트","다이소","아성","롯데쇼핑","스타필드","백화점","씨제이이엔엠","스마트로","한국정보통신","나이스정보통신","케이에스넷","코페이","카카오페이","섹타나인","전자지급","결제대행","국군복지단","모닝글로리","도소매|도매|소매"), 173],
+  ];
+  const ACCT = {811:"복리후생비",812:"여비교통비",813:"접대비",814:"통신비",817:"세금과공과",821:"보험료",822:"차량유지비",830:"소모품비",134:"가지급금",137:"(입증 필요)",173:"상품"};
+  const s = x => x == null ? "" : String(x);
+  const num = x => { if (x == null || x === "") return 0; if (typeof x === "number") return x; const v = parseFloat(String(x).replace(/[,\s원]/g, "")); return isNaN(v) ? 0 : v; };
+  const bn = x => s(x).replace(/\D/g, "");
+
+  function classify(r, profile) {
+    const name = s(r["가맹점명"]), ty = s(r["가맹점유형"]), text = `${name} ${s(r["업태"])} ${s(r["업종"])}`;
+    const total = num(r["합계"]), tax = num(r["세액"]);
+    let cat = "기타", acct = null, flag = "";
+    for (const [c, pat, a] of CAT) { if (pat.test(text)) { cat = c; acct = a; break; } }
+    if (cat === "온라인·상품" && Math.abs(total) > 0 && Math.abs(total) <= 1000 && /카카오페이|카드|페이/.test(name)) { cat = "금융수수료"; acct = 134; }
+    if (profile === "면세") {
+      if (cat === "온라인·상품") acct = 830;
+      if (cat === "기타") { acct = 830; flag = "계정 확인"; }
+      const reason = {"교통":"여객운송 등 불공제","보험":"보험료(면세)","금융수수료":"금융·수수료(면세)","의료":"의료·가사 관련","개인생활":"업무무관(가사경비 예상)","차량구입":"승용차 관련"}[cat] || "면세사업자 매입세액 불공제";
+      return ["불공제", acct, "", reason, flag];
+    }
+    if (cat === "교통") return ["불공제", 812, "", "여객운송·택시는 매입세액 불공제", ""];
+    if (cat === "보험") return ["불공제", 821, "", "보험료는 면세 → 불공제", ""];
+    if (cat === "통신") return ["불공제", 134, "", "통신비는 세금계산서로 공제 → 카드분 불공제(이중공제 방지)", ""];
+    if (cat === "금융수수료") return ["불공제", 134, "", "금융·카드 수수료는 면세 → 불공제", ""];
+    if (cat === "의료") return ["불공제", 134, "", "병원·약국: 업무무관(가사경비) → 가지급금", ""];
+    if (cat === "개인생활") return ["불공제", 134, "", "개인 용도(가사경비) → 가지급금", ""];
+    if (cat === "차량구입") return ["불공제", 134, "", "승용차 구입·유지(비영업용 소형승용차 불공제)", "차종 확인"];
+    if (ty.startsWith("간이")) return ["불공제", [811,173].includes(acct) ? acct : 134, "", "간이과세자 영수증분 → 불공제", ""];
+    if (ty.startsWith("면세") || (tax === 0 && total !== 0)) return ["불공제", [811,173,812].includes(acct) ? acct : 134, "", "면세사업자·세액 0 → 불공제", ""];
+    const common = profile === "겸영" ? "공통매입세액" : "";
+    if (cat === "차량유지") return ["공제", 822, common, "주유·차량 → 차량유지비" + (common ? " (공통매입)" : ""), "차종 확인(승용차면 불공제)"];
+    if (cat === "식비") return ["공제", 811, common, "식대·간식 → 복리후생비" + (common ? " (공통매입)" : ""), ""];
+    if (cat === "온라인·상품") {
+      if (Math.abs(total) >= 1000000) return ["불공제", 137, "", "세액이 커서 구체적 입증 필요", "증빙 확인"];
+      return ["공제", 173, "사업용신용카드 매입", "온라인·도소매 구입 → 상품", ""];
+    }
+    return ["공제", 173, "사업용신용카드 매입", "업종 불명 → 상품으로 추정", "업종 확인"];
+  }
+
+  // 시트 배열에서 key로 시작하는 칸이 있는 행을 머리글로 표 만들기
+  function tableFrom(aoa, key) {
+    const hi = aoa.findIndex(r => (r || []).some(x => s(x).trim().startsWith(key)));
+    if (hi < 0) return null;
+    const hdr = aoa[hi].map((x, j) => x == null || x === "" ? `c${j}` : s(x).split("\n")[0].split("(")[0].replace(/\s+/g, ""));
+    const rows = aoa.slice(hi + 1).filter(r => r && r.some(v => v != null && v !== "")).map(r => { const o = {}; hdr.forEach((h, j) => o[h] = r[j] == null ? null : r[j]); return o; });
+    return { hdr, rows };
+  }
+  async function readBook(file) {
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, { type: "array", cellDates: false });
+    return wb.SheetNames.map(n => XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1, raw: false, defval: null }));
+  }
+  async function learn(files) {
+    const mem = {};
+    const add = (k, v) => { if (!k) return; mem[k] = mem[k] || {}; const key = JSON.stringify(v); mem[k][key] = (mem[k][key] || 0) + 1; };
+    for (const f of files) {
+      for (const aoa of await readBook(f)) {
+        const t1 = tableFrom(aoa, "카드종류");
+        if (t1 && t1.hdr.includes("부가세공제여부")) {
+          for (const r of t1.rows) { const d = r["부가세공제여부"], a = parseInt(num(r["계정과목"])); if ((d === "공제" || d === "불공제") && a) add(bn(r["사업자등록번호"]), [d, a, s(r["품목"])]); }
+          continue;
+        }
+        const t2 = tableFrom(aoa, "승인일자");
+        if (!t2 || !t2.hdr.includes("공제여부결정")) continue;
+        const col = t2.hdr.includes("코드") ? "코드" : (t2.hdr.includes("계정과목") ? "계정과목" : null);
+        if (!col) continue;
+        for (const r of t2.rows) {
+          const d = r["공제여부결정"], a = parseInt(num(r[col]));
+          if (!["공제", "불공제", "공통공제"].includes(d) || !a) continue;
+          add(bn(r["가맹점사업자번호"]), [d === "불공제" ? "불공제" : "공제", a, d === "공통공제" ? "공통매입세액" : (d === "공제" ? "사업용신용카드 매입" : "")]);
+        }
+      }
+    }
+    const out = {};
+    for (const k in mem) out[k] = JSON.parse(Object.entries(mem[k]).sort((a, b) => b[1] - a[1])[0][0]);
+    return out;
+  }
+
+  async function run(file, opts) {
+    const books = await readBook(file);
+    let t = null;
+    for (const aoa of books) { t = tableFrom(aoa, "승인일자"); if (t) break; }
+    if (!t) throw new Error("'승인일자' 칸이 있는 홈택스 카드 표를 찾지 못했어요.");
+    const orig = t.hdr.filter(h => !/^c\d+$/.test(h) && !h.includes(":") && h !== "코드" && h !== "비고");
+    const mem = opts.history && opts.history.length ? await learn(opts.history) : {};
+    const big = opts.big || 300000;
+    const res = [];
+    for (const r of t.rows) {
+      if (!r["승인일자"] || !r["가맹점명"]) continue;
+      ["공급가액", "세액", "비과세", "합계"].forEach(k => r[k] = num(r[k]));
+      let d, acct, item, why, flag;
+      const m = mem[bn(r["가맹점사업자번호"])];
+      if (m) { [d, acct, item] = m; why = "지난 처리 기준(같은 가맹점)"; flag = ""; }
+      else [d, acct, item, why, flag] = classify(r, opts.profile);
+      const amt = Math.abs(r["합계"]);
+      const isBig = amt >= 1000000 || (amt >= big && acct !== 173);
+      if (isBig) flag = "고액 검토" + (flag ? " · " + flag : "");
+      const nm = ACCT[acct] || "";
+      const reason = (nm && why.includes(nm.slice(0, 2))) ? why : [nm, why].filter(Boolean).join(" · ");
+      res.push({ r, d, type: d === "공제" ? 57 : null, acct, nm, item, why, reason, flag, big: isBig });
+    }
+    return { orig, res };
+  }
+
+  async function download(out, opts) {
+    const { orig, res } = out;
+    const name = (opts.name || "카드").replace(/[\\/:*?"<>|]/g, "");
+    const fname = `1차검토_${name}.xlsx`;
+    const review = res.filter(x => x.flag).sort((a, b) => (b.big - a.big) || (Math.abs(b.r["합계"]) - Math.abs(a.r["합계"])));
+    const S2 = ["카드종류","신용카드사명","신용카드번호","승인일자","사업자등록번호","거래처명","거래처유형","공급가액","세액","봉사료","합계금액","부가세공제여부","부가세유형","계정과목","품목"];
+    const paste = res.map(x => { const sup = x.r["공급가액"] + (x.d === "불공제" ? x.r["비과세"] : 0);
+      return [3, x.r["카드사"], x.r["카드번호"], x.r["승인일자"], x.r["가맹점사업자번호"], s(x.r["가맹점명"]).slice(0, 15), null, sup, x.r["세액"], 0, sup + x.r["세액"], x.d, x.type, x.acct, x.item || null]; });
+    const sumMap = {};
+    res.forEach(x => { const k = `${x.d}|${x.acct}|${x.nm}`; sumMap[k] = sumMap[k] || [x.d, x.acct, x.nm, 0, 0, 0]; sumMap[k][3]++; sumMap[k][4] += x.r["합계"]; sumMap[k][5] += x.r["세액"]; });
+    const sheets = [
+      ["검토 필요", ["구분","승인일자","가맹점명","업종","합계","자동 판단","계정","근거","확인할 것"],
+        review.map(x => [x.big ? "고액" : "확인", x.r["승인일자"], x.r["가맹점명"], x.r["업종"] || x.r["업태"], x.r["합계"], x.d, `${x.acct} ${x.nm}`, x.why, x.flag])],
+      ["홈택스+분류", [...orig, "부가세유형", "품목", "검토", "공제여부", "계정과목", "구분 이유"],
+        res.map(x => [...orig.map(h => x.r[h]), x.type, x.item || null, x.flag || null, x.d, x.acct, x.reason])],
+      ["세무사랑 붙여넣기", S2, paste],
+      ["요약", ["공제여부","계정과목","계정명","건수","합계","세액"], Object.values(sumMap)],
+    ];
+    if (window.ExcelJS) {
+      const wb = new ExcelJS.Workbook();
+      const fill = c => ({ type: "pattern", pattern: "solid", fgColor: { argb: "FF" + c } });
+      sheets.forEach(([title, head, rows], si) => {
+        const ws = wb.addWorksheet(title, { views: [{ state: "frozen", ySplit: 1 }] });
+        ws.addRow(head); rows.forEach(r => ws.addRow(r));
+        const hr = ws.getRow(1); hr.height = 28;
+        hr.eachCell((c, i) => { c.font = { bold: true, color: { argb: "FFFFFFFF" }, name: "Arial", size: 10 }; c.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
+          c.fill = fill(si === 1 && i > orig.length ? "2F5D9F" : "1F2A44"); });
+        for (let i = 2; i <= ws.rowCount; i++) {
+          const row = ws.getRow(i); let f = null;
+          if (si === 0) f = row.getCell(1).value === "고액" ? "F8CBAD" : null;
+          if (si === 1) { const x = res[i - 2]; f = x.big ? "F8CBAD" : (x.flag ? "FFF2CC" : (x.d === "불공제" ? "EDEDED" : null)); }
+          row.eachCell({ includeEmpty: true }, c => { c.font = { name: "Arial", size: 10 }; if (f) c.fill = fill(f); if (typeof c.value === "number" && Math.abs(c.value) >= 1000) c.numFmt = "#,##0"; });
+        }
+        head.forEach((h, j) => ws.getColumn(j + 1).width = ({"가맹점명":24,"구분 이유":40,"근거":32,"확인할 것":24,"검토":20,"업종":18,"카드번호":20,"신용카드번호":20,"거래처명":18,"품목":16})[h] || 11);
+        if (si === 2) { const c = ws.getCell(1, 17); c.value = "사용법: A2~O열 끝까지 복사 → 세무사랑 '신용카드매입자료입력' 양식 A10에 값 붙여넣기"; c.font = { bold: true, color: { argb: "FFC00000" }, name: "Arial", size: 10 }; }
+        if (si < 2) ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: head.length } };
+      });
+      const buf = await wb.xlsx.writeBuffer();
+      const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
+      a.download = fname; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    } else {
+      const wb = XLSX.utils.book_new();
+      sheets.forEach(([title, head, rows]) => XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([head, ...rows]), title));
+      XLSX.writeFile(wb, fname);
+    }
+  }
+  return { classify, run, download, ACCT };
+})();
+
+/* ---------- 카드 분류 화면 ---------- */
+let cardLibP=null;
+function loadScript(src){ return new Promise((ok,no)=>{ const t=document.createElement("script"); t.src=src; t.onload=ok; t.onerror=()=>no(new Error("load "+src)); document.head.appendChild(t); }); }
+function cardLibs(){
+  if(!cardLibP) cardLibP = loadScript("https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js")
+    .then(()=>loadScript("https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js").catch(()=>{}))
+    .catch(e=>{ cardLibP=null; throw e; });
+  return cardLibP;
+}
+(function(){
+  const $=id=>document.getElementById(id);
+  let file=null, prof="과세", last=null;
+  const setFile=f=>{ file=f; $("cFn").textContent=f?f.name:""; $("cRun").disabled=!f; };
+  $("cDrop").addEventListener("click",()=>$("cFile").click());
+  $("cFile").addEventListener("change",e=>setFile(e.target.files[0]||null));
+  ["dragenter","dragover"].forEach(ev=>$("cDrop").addEventListener(ev,e=>{e.preventDefault();$("cDrop").classList.add("on");}));
+  ["dragleave","drop"].forEach(ev=>$("cDrop").addEventListener(ev,e=>{e.preventDefault();$("cDrop").classList.remove("on");}));
+  $("cDrop").addEventListener("drop",e=>{ const f=e.dataTransfer.files[0]; if(f) setFile(f); });
+  $("cProf").addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b) return; prof=b.dataset.p; $("cProf").querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b)); });
+  $("cBig").addEventListener("input",e=>{ const v=e.target.value.replace(/[^0-9]/g,""); e.target.value=v?Number(v).toLocaleString("ko-KR"):""; });
+  const fmt=v=>Math.round(v).toLocaleString("ko-KR");
+  const opts=()=>({profile:prof, name:$("cName").value.trim(), big:parseInt(($("cBig").value||"0").replace(/,/g,""))||300000, history:[...$("cHist").files]});
+  $("cRun").addEventListener("click",async()=>{
+    $("cErr").innerHTML=""; $("cRun").disabled=true; $("cRun").textContent="검토 중…";
+    try{
+      await cardLibs(); if(!window.XLSX) throw new Error("엑셀 읽기 도구를 불러오지 못했어요. 인터넷 연결을 확인해 주세요.");
+      const o=opts(); last={out:await CARD.run(file,o), o}; renderCard(last);
+    }catch(err){ $("cErr").innerHTML=`<div class="cerr">${esc(err.message||err)}</div>`; }
+    finally{ $("cRun").disabled=!file; $("cRun").textContent="1차 검토 실행"; }
+  });
+  function renderCard({out,o}){
+    const R=out.res, nd=R.filter(x=>x.d==="불공제").length, big=R.filter(x=>x.big).length, chk=R.filter(x=>x.flag&&!x.big).length;
+    const rv=R.filter(x=>x.flag).sort((a,b)=>(b.big-a.big)||(Math.abs(b.r["합계"])-Math.abs(a.r["합계"])));
+    const row=(x,cols)=>`<tr class="${x.big?"r-big":x.flag?"r-chk":x.d==="불공제"?"r-nd":""}">${cols}</tr>`;
+    $("cResult").innerHTML=`
+      <div class="kpis">
+        <div class="kpi"><span>전체</span><b>${R.length}</b></div>
+        <div class="kpi"><span>공제 / 불공제</span><b>${R.length-nd} / ${nd}</b></div>
+        <div class="kpi red"><span>고액 검토</span><b>${big}</b></div>
+        <div class="kpi yel"><span>확인 필요</span><b>${chk}</b></div>
+      </div>
+      <div class="panel"><div class="panel-h">검토 필요 <span class="n">${rv.length}</span><span style="margin-left:auto"><button class="dlbtn" id="cDl">⬇ 1차검토 엑셀 받기</button></span></div>
+        <div class="cscroll" style="max-height:380px"><table class="ctbl"><thead><tr><th>구분</th><th>승인일자</th><th>가맹점명</th><th>합계</th><th>판단</th><th>계정</th><th>확인할 것</th></tr></thead><tbody>
+        ${rv.map(x=>row(x,`<td>${x.big?"고액":"확인"}</td><td>${esc(x.r["승인일자"])}</td><td>${esc(x.r["가맹점명"])}</td><td class="n">${fmt(x.r["합계"])}</td><td>${x.d}</td><td>${x.acct} ${esc(x.nm)}</td><td>${esc(x.flag)}</td>`)).join("")||'<tr><td colspan="7" class="cmsg">검토할 건이 없어요.</td></tr>'}
+        </tbody></table></div></div>
+      <div class="panel"><div class="panel-h">전체 분류 결과 <span class="n">${R.length}</span></div>
+        <div class="cscroll"><table class="ctbl"><thead><tr><th>승인일자</th><th>가맹점명</th><th>유형</th><th>합계</th><th>공제여부</th><th>계정</th><th>구분 이유</th></tr></thead><tbody>
+        ${R.map(x=>row(x,`<td>${esc(x.r["승인일자"])}</td><td>${esc(x.r["가맹점명"])}</td><td>${esc(x.r["가맹점유형"])}</td><td class="n">${fmt(x.r["합계"])}</td><td>${x.d}</td><td>${x.acct}</td><td>${esc(x.reason)}</td>`)).join("")}
+        </tbody></table></div></div>`;
+    $("cDl").addEventListener("click",async()=>{ try{ await CARD.download(last.out,last.o); }catch(err){ $("cErr").innerHTML=`<div class="cerr">${esc(err.message||err)}</div>`; } });
+  }
+})();
 
 /* ---------- 구글 시트 불러오기 ---------- */
 /* ---------- 구글 시트 불러오기 ---------- */
