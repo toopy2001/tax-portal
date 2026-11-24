@@ -43,6 +43,10 @@
   .side-box li{padding:5px 0 5px 12px;position:relative;color:var(--side-ink)}
   .side-box li::before{content:"";position:absolute;left:0;top:12px;width:5px;height:5px;border-radius:50%;background:var(--gold)}
   .sync{margin-top:14px;font-size:11.5px;color:var(--side-mute)}
+  .dl-b{font-style:normal;display:inline-block;min-width:34px;margin-right:5px;padding:0 5px;border-radius:8px;font-size:10.5px;text-align:center;background:rgba(255,255,255,.12);color:#fff}
+  .dl-b.now{background:var(--gold);color:#222}
+  .dl-past{opacity:.5}
+  .dl-mv{color:var(--side-mute);font-size:10.5px}
 
   /* ── 본문 ── */
   .main{padding:26px 34px 48px;min-width:0}
@@ -480,7 +484,7 @@
       </div>
     </div>
 
-    <footer>신고기한·절차는 일반적인 기준입니다. 기한이 주말·공휴일이면 다음 영업일로 연장되며, 사이트 메뉴 이름은 개편으로 바뀔 수 있습니다. 내용 수정은 구글 시트에서 합니다. · 화면 버전 2026-11-24h (나열 항목 한 줄로)</footer>
+    <footer>신고기한·절차는 일반적인 기준입니다. 기한이 주말·공휴일이면 다음 영업일로 연장되며, 사이트 메뉴 이름은 개편으로 바뀔 수 있습니다. 내용 수정은 구글 시트에서 합니다. · 화면 버전 2026-11-25 (신고기한 D-day·주말 연장)</footer>
   </main>
 </div>
 
@@ -618,7 +622,20 @@ function renderNav(){
 function renderToday(){
   const now=new Date(), m=now.getMonth()+1;
   document.getElementById("todayH").innerHTML = `${m}월 신고기한 <span>${now.getMonth()+1}.${now.getDate()}</span>`;
-  document.getElementById("today").innerHTML = DEADLINES[m].map(x=>`<li>${esc(x)}</li>`).join("");
+  /* 기한이 토·일이면 다음 날(월)로 표시 — 국세기본법 제5조①. 공휴일·대체공휴일은 따로 확인 */
+  const t0=new Date(now.getFullYear(),now.getMonth(),now.getDate()), WD="일월화수목금토";
+  document.getElementById("today").innerHTML = DEADLINES[m].map(x=>{
+    const g=/^(\d{1,2})\/(\d{1,2})\s*/.exec(x);
+    if(!g) return `<li>${esc(x)}</li>`;
+    let d=new Date(now.getFullYear(),+g[1]-1,+g[2]); const orig=new Date(d);
+    while(d.getDay()===0||d.getDay()===6) d.setDate(d.getDate()+1);
+    const diff=Math.round((d-t0)/86400000);
+    const moved=d.getTime()!==orig.getTime();
+    const head=`${d.getMonth()+1}/${d.getDate()}(${WD[d.getDay()]})`;
+    const badge=diff<0?`<i class="dl-b past">지남</i>`:diff===0?`<i class="dl-b now">오늘</i>`:`<i class="dl-b">D-${diff}</i>`;
+    const note=moved?` <small class="dl-mv" title="원래 기한 ${g[1]}/${g[2]}이 주말이라 다음 날로 연장 (국세기본법 제5조)">← ${g[1]}/${g[2]} 주말</small>`:"";
+    return `<li class="${diff<0?"dl-past":""}">${badge}${esc(head+" "+x.slice(g[0].length))}${note}</li>`;
+  }).join("");
 }
 function renderControls(){
   const m=cur();
