@@ -69,6 +69,10 @@
   .panel-h{display:flex;align-items:center;gap:8px;padding:11px 18px;border-bottom:1px solid var(--line);background:var(--head);font-weight:700;font-size:13.5px}
   .panel-h .n{font-size:11.5px;font-weight:500;color:var(--mute);background:var(--panel);border:1px solid var(--line);padding:0 7px;border-radius:999px}
   .empty{color:var(--mute);padding:40px 0;text-align:center}
+  .xhit{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 12px;font-size:13px;color:var(--mute)}
+  .xhit button{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:999px;padding:3px 11px;font:500 13px inherit;cursor:pointer}
+  .xhit button:hover{border-color:var(--accent);color:var(--accent)}
+  .xhit b{color:var(--accent);margin-left:2px}
 
   /* 표 */
   table.tbl{width:100%;border-collapse:collapse;font-size:13.5px}
@@ -488,7 +492,7 @@
       </div>
     </div>
 
-    <footer>신고기한·절차는 일반적인 기준입니다. 기한이 주말·공휴일이면 다음 영업일로 연장되며, 사이트 메뉴 이름은 개편으로 바뀔 수 있습니다. 내용 수정은 구글 시트에서 합니다. · 화면 버전 2026-11-25b (급여 계산기 연봉 입력)</footer>
+    <footer>신고기한·절차는 일반적인 기준입니다. 기한이 주말·공휴일이면 다음 영업일로 연장되며, 사이트 메뉴 이름은 개편으로 바뀔 수 있습니다. 내용 수정은 구글 시트에서 합니다. · 화면 버전 2026-11-26 (검색 시 다른 메뉴 결과 개수)</footer>
   </main>
 </div>
 
@@ -655,7 +659,7 @@ function renderControls(){
   if(isEmp) empLoad();
   document.getElementById("calcBox").classList.toggle("hidden", !isCalc);
   document.getElementById("cardBox").classList.toggle("hidden", !isCard);
-  if(isCard) cardLibs();
+  if(isCard) cardLibs().catch(()=>{});   // CDN이 막혀도 화면은 열리게 (실행할 때 다시 시도)
   const tabs=document.getElementById("tabs");
   tabs.classList.toggle("hidden", m.type!=="sites");
   tabs.innerHTML = CATS.map(c=>`<button class="subtab ${c===cat?'on':''}" data-c="${esc(c)}">${esc(c)}</button>`).join("");
@@ -770,11 +774,24 @@ document.addEventListener("click", e=>{
   saveDocsOpen();
 });
 
+/* 검색어가 다른 메뉴(사이트·절차·세무사랑·서류)에도 있으면 개수를 보여 주고 눌러서 이동 */
+function hitCount(m,q){
+  if(m.type==="sites") return SITES.filter(s=>(s.n+s.d+s.t.join(" ")+s.u+s.c).toLowerCase().includes(q)).length;
+  const src=DATA[m.id]||[];
+  if(m.type==="procs") return src.filter(p=>(p.n+p.d+p.steps.map(s=>s.join(" ")).join(" ")).toLowerCase().includes(q)).length;
+  if(m.type==="docs") return src.filter(d=>d.join(" ").toLowerCase().includes(q)).length;
+  return 0;
+}
+function otherHits(q){
+  if(!q) return "";
+  const hits=MENU.filter(m=>m.id!==mode&&/^(sites|procs|docs)$/.test(m.type)).map(m=>[m,hitCount(m,q)]).filter(x=>x[1]);
+  return hits.length ? `<div class="xhit">다른 메뉴에도 있음 ${hits.map(([m,n])=>`<button type="button" data-go="${esc(m.id)}">${esc(m.label)}<b>${n}</b></button>`).join("")}</div>` : "";
+}
 function render(){
   const q=document.getElementById("q").value.trim().toLowerCase();
   const m=cur();
   const html = m.type==="sites" ? renderSites(q) : m.type==="procs" ? renderProcs(q, DATA[m.id]) : m.type==="docs" ? renderDocs(q, DATA[m.id]) : "";
-  document.getElementById("list").innerHTML = html || `<div class="empty">검색 결과가 없습니다.</div>`;
+  document.getElementById("list").innerHTML = otherHits(q) + (html || `<div class="empty">검색 결과가 없습니다.</div>`);
 }
 function go(id){
   if(!MENU.some(m=>m.id===id)) return;
@@ -792,6 +809,8 @@ document.getElementById("tabs").addEventListener("click",e=>{
   cat=b.dataset.c; store.set("taxCat",cat); renderControls(); render();
 });
 document.getElementById("list").addEventListener("click",e=>{
+  const xg=e.target.closest("[data-go]");
+  if(xg){ if(xg.dataset.go==="sites"){ cat="전체"; store.set("taxCat",cat); } go(xg.dataset.go); return; }
   const st=e.target.closest(".star");
   if(st){ e.preventDefault(); const n=st.dataset.n; favs=favs.includes(n)?favs.filter(x=>x!==n):[...favs,n]; store.set("taxFavs",favs); render(); return; }
   const it=e.target.closest(".mitem");
