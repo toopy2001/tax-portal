@@ -370,6 +370,10 @@
               <button data-d="rev" class="on">세후 → 세전</button>
               <button data-d="fwd">세전 → 세후</button>
             </div>
+            <div class="seg" id="per">
+              <button data-p="m" class="on">월급으로 입력</button>
+              <button data-p="y">연봉으로 입력</button>
+            </div>
             <div class="field">
               <label id="amtLabel">실수령액 (세후)</label>
               <input type="text" id="amt" inputmode="numeric" placeholder="예: 2,500,000">
@@ -484,7 +488,7 @@
       </div>
     </div>
 
-    <footer>신고기한·절차는 일반적인 기준입니다. 기한이 주말·공휴일이면 다음 영업일로 연장되며, 사이트 메뉴 이름은 개편으로 바뀔 수 있습니다. 내용 수정은 구글 시트에서 합니다. · 화면 버전 2026-11-25 (신고기한 D-day·주말 연장)</footer>
+    <footer>신고기한·절차는 일반적인 기준입니다. 기한이 주말·공휴일이면 다음 영업일로 연장되며, 사이트 메뉴 이름은 개편으로 바뀔 수 있습니다. 내용 수정은 구글 시트에서 합니다. · 화면 버전 2026-11-25b (급여 계산기 연봉 입력)</footer>
   </main>
 </div>
 
@@ -856,8 +860,20 @@ function earnedCredit(calc,T){
 }
 function simpleTax(monthly, n, ratio){
   if(monthly<1060000) return 0;
+  if(monthly>1e7){   // 간이세액표 작성방법: 월급여 1천만원 초과
+    const b=simpleTaxAt(1e7,n), x=monthly;
+    const add = x<=1.4e7 ? (x-1e7)*0.98*0.35+25000
+      : x<=2.8e7 ? 1397000+(x-1.4e7)*0.98*0.38
+      : x<=3e7   ? 6610600+(x-2.8e7)*0.98*0.40
+      : x<=4.5e7 ? 7394600+(x-3e7)*0.40
+      : x<=8.7e7 ? 13394600+(x-4.5e7)*0.42
+      : 31034600+(x-8.7e7)*0.45;
+    return f10(b+add);
+  }
   const w = monthly<1.5e6?5000 : monthly<3e6?10000 : 20000;
-  const mid = Math.floor(monthly/w)*w + w/2;
+  return simpleTaxAt(Math.floor(monthly/w)*w + w/2, n);
+}
+function simpleTaxAt(mid, n){
   const T = mid*12;
   const npsBase = Math.min(Math.max(Math.floor(mid/1000)*1000, RATE.npsMin), RATE.npsMax);
   const pension = npsBase*0.045*12;   // 현행 간이세액표는 국민연금 4.5% 기준으로 작성됨
@@ -905,9 +921,9 @@ function solve(kind, target, o){
   return hi;
 }
 
-let cKind="work", cDir="rev";
+let cKind="work", cDir="rev", cPer="m";
 function calcRender(){
-  const amt=num(document.getElementById("amt").value);
+  let amt=num(document.getElementById("amt").value);
   const o={
     nontax:num(document.getElementById("nontax").value),
     fam:parseInt(document.getElementById("fam").value,10)||1,
@@ -919,13 +935,18 @@ function calcRender(){
     etcExp:parseFloat(document.getElementById("etcExp").value)
   };
   document.getElementById("workOpts").classList.toggle("hidden",cKind!=="work");
+  document.getElementById("per").classList.toggle("hidden",cKind!=="work");
+  const yearly = cKind==="work" && cPer==="y";
   document.getElementById("etcOpts").classList.toggle("hidden",cKind!=="etc");
-  document.getElementById("amtLabel").textContent = cDir==="rev" ? "실수령액 (세후)" : "지급액 (세전)";
+  document.getElementById("amtLabel").textContent = (yearly?"연 ":"월 ")+(cDir==="rev" ? "실수령액 (세후)" : "지급액 (세전)");
+  if(cKind!=="work") document.getElementById("amtLabel").textContent = cDir==="rev" ? "실수령액 (세후)" : "지급액 (세전)";
   document.getElementById("amtHint").textContent = cKind==="work"
     ? (cDir==="rev"?"비과세 포함, 통장에 들어오는 금액":"비과세 포함 총 지급액")
     : (cDir==="rev"?"받는 사람에게 실제로 줄 금액":"계약상 지급 총액");
   const box=document.getElementById("calcResult");
   if(!amt){ box.innerHTML=""; return; }
+  const amtIn = amt;
+  if(yearly) amt = Math.round(amt/12);   // 연봉 → 월 환산 (비과세는 월 금액)
   if(cKind==="work" && o.nontax>amt && cDir==="fwd"){ box.innerHTML=`<div class="cnote">비과세 금액이 지급액보다 큽니다.</div>`; return; }
 
   const gross = cDir==="rev" ? solve(cKind,amt,o) : amt;
@@ -939,7 +960,8 @@ function calcRender(){
     notes.push("4대보험: 국민연금 4.75%(기준소득월액 41만~659만원), 건강 3.595%, 장기요양 건보료의 13.14%, 고용 0.9% · 각 10원 미만 절사.");
     notes.push("소득세는 간이세액표 작성 산식으로 계산한 <b>추정치</b>입니다. 표와 수십 원 차이가 날 수 있으니 신고 전 홈택스 '근로소득 간이세액표'로 확인하세요.");
     if(o.kids) notes.push(`자녀 ${o.kids}명 공제 ${won(childCredit(o.kids))}을 간이세액표 금액에서 뺐습니다.`);
-    if(gross-o.nontax>1e7) notes.push("⚠️ 과세급여 월 1천만원 초과는 간이세액표 별도 산식이 적용돼 이 계산이 맞지 않습니다.");
+    if(gross-o.nontax>1e7) notes.push("과세급여 월 1천만원 초과분은 간이세액표의 1천만원 초과 산식(35~45%)으로 계산했습니다.");
+    if(yearly) notes.push(`연봉 ${won(amtIn)}을 12로 나눈 월 ${won(amt)} 기준으로 계산했습니다. 비과세는 월 금액으로 넣으세요.`);
   } else if(cKind==="biz"){
     notes.push("소득세 3% + 지방소득세 0.3%. 소득세가 1,000원 미만이면 징수하지 않습니다(소액부징수).");
   } else {
@@ -947,13 +969,16 @@ function calcRender(){
   }
   if(diff>0) notes.push(`10원 단위 절사·세액 구간 때문에 실수령액이 목표보다 ${won(diff)} 많게 나옵니다.`);
 
-  box.innerHTML = `<div class="result">
-    <div class="big"><span>${cDir==="rev"?"세전 지급액":"실수령액"}</span><b>${won(cDir==="rev"?r.gross:r.net)}</b></div>
+  const warnYear = cKind==="work" && !yearly && amt>=15000000 ? `<div class="cerr" style="margin:0 0 12px">월 ${won(amt)}으로 계산했어요. <b>연봉</b>이면 위에서 '연봉으로 입력'을 누르세요.</div>` : "";
+  const yearRows = yearly ? `<tr class="sub"><td>연간 세전 (×12)</td><td>${won(r.gross*12)}</td></tr><tr class="sub"><td>연간 공제 (×12)</td><td>− ${won(r.ded*12)}</td></tr><tr class="total"><td>연간 실수령액 (×12)</td><td>${won(r.net*12)}</td></tr>` : "";
+  box.innerHTML = `<div class="result">${warnYear}
+    <div class="big"><span>${yearly?(cDir==="rev"?"필요 연봉 (세전)":"연 실수령액"):(cDir==="rev"?"세전 지급액":"실수령액")}</span><b>${won(yearly?(cDir==="rev"?r.gross*12:r.net*12):(cDir==="rev"?r.gross:r.net))}</b></div>
     <table class="rtable">
-      <tr><td>세전 지급액${cKind==="work"&&o.nontax?` <span style="color:var(--muted);font-size:12px">(비과세 ${won(o.nontax)} 포함)</span>`:""}</td><td>${won(r.gross)}</td></tr>
+      <tr><td>${yearly?"월 ":""}세전 지급액${cKind==="work"&&o.nontax?` <span style="color:var(--muted);font-size:12px">(비과세 ${won(o.nontax)} 포함)</span>`:""}</td><td>${won(r.gross)}</td></tr>
       ${rows.map(x=>`<tr class="${x[2]||""}"><td>${x[0]}</td><td>${x[2]?won(x[1]):"− "+won(x[1])}</td></tr>`).join("")}
       <tr><td>공제 합계</td><td>− ${won(r.ded)}</td></tr>
-      <tr class="total"><td>실수령액</td><td>${won(r.net)}</td></tr>
+      <tr class="total"><td>${yearly?"월 실수령액":"실수령액"}</td><td>${won(r.net)}</td></tr>
+      ${yearRows}
     </table>
     <button class="copy" id="copyBtn">결과 복사</button>
     <div class="cnote">${notes.map(n=>"· "+n).join("<br>")}</div>
@@ -969,6 +994,10 @@ document.getElementById("fam").innerHTML=Array.from({length:11},(_,i)=>`<option 
 document.getElementById("kind").addEventListener("click",e=>{
   const b=e.target.closest("button"); if(!b) return;
   cKind=b.dataset.k; document.querySelectorAll("#kind button").forEach(x=>x.classList.toggle("on",x===b)); calcRender();
+});
+document.getElementById("per").addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b) return;
+  cPer=b.dataset.p; document.querySelectorAll("#per button").forEach(x=>x.classList.toggle("on",x===b)); calcRender();
 });
 document.getElementById("dir").addEventListener("click",e=>{
   const b=e.target.closest("button"); if(!b) return;
