@@ -250,6 +250,13 @@
   .tdate{font-size:12.5px;color:var(--mute);font-variant-numeric:tabular-nums}
   .ttxt{font-weight:600;font-size:14px}
   .ttxt span{font-weight:400;color:var(--mute);font-size:12.5px;margin-left:6px}
+  .todo.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);border-left:none;overflow:hidden}
+  .todo.two .tcol{min-width:0}
+  .todo.two .tcol.mine{border-left:4px solid var(--gold)}
+  .todo.two .tcol.law{border-left:1px solid var(--line);background:#fbfcfe}
+  .todo.two li{grid-template-columns:64px 78px minmax(0,1fr)}
+  .tempty{display:block!important;color:var(--mute);font-size:13px}
+  @media (max-width:900px){ .todo.two{grid-template-columns:1fr} .todo.two .tcol.law{border-left:4px solid var(--line);border-top:1px solid var(--line)} .todo.two li{grid-template-columns:64px minmax(0,1fr)} }
   .tk{display:inline-block;font-style:normal;font-size:11px;font-weight:700;padding:1px 7px;border-radius:5px;margin-right:6px;vertical-align:1px}
   .tk.mine{background:var(--accent-soft);color:var(--accent)} .tk.law{background:var(--gray-soft);color:var(--mute)}
   .todo-h .tk{margin:0 0 0 2px;font-weight:600}
@@ -495,7 +502,7 @@
       </div>
     </div>
 
-    <footer>신고기한·절차는 일반적인 기준입니다. 기한이 주말·공휴일이면 다음 영업일로 연장되며, 사이트 메뉴 이름은 개편으로 바뀔 수 있습니다. 내용 수정은 구글 시트에서 합니다. · 화면 버전 2026-11-26b (해야 할 일: 내 할 일 + 2주 안 신고기한)</footer>
+    <footer>신고기한·절차는 일반적인 기준입니다. 기한이 주말·공휴일이면 다음 영업일로 연장되며, 사이트 메뉴 이름은 개편으로 바뀔 수 있습니다. 내용 수정은 구글 시트에서 합니다. · 화면 버전 2026-11-26c (해야 할 일: 내 할 일 | 신고기한 좌우 구분)</footer>
   </main>
 </div>
 
@@ -1632,17 +1639,18 @@ function renderTodo(){
   const box=document.getElementById("todo");
   const today=new Date(); today.setHours(0,0,0,0);
   const mine=TODOS.map(r=>({d:parseDay(r[0]),t:r[1]||"",m:r[2]||"",done:/^(o|O|ㅇ|완료|v|V|✓|y|Y|TRUE)$/.test((r[3]||"").trim())}))
-    .filter(x=>x.d&&x.t&&!x.done);
-  const list=[...mine, ...lawDeadlines(14)].sort((a,b)=>(a.d-b.d)||(a.law-b.law));
-  if(!list.length){ box.innerHTML=""; return; }
-  const W="일월화수목금토", nMine=mine.length, nLaw=list.length-nMine;
-  box.innerHTML=`<div class="todo"><div class="todo-h">📌 해야 할 일 <span class="n">${list.length}</span><span class="tk mine">내 할 일 ${nMine}</span><span class="tk law">신고기한 ${nLaw}</span><small>내 할 일은 시트 '할일' 탭에서 추가 · 끝나면 완료 칸에 O</small></div><ul>`+
-    list.map(x=>{
-      const diff=Math.round((x.d-today)/86400000);
-      const lab = diff===0?"오늘":diff>0?`D-${diff}`:`${-diff}일 지남`;
-      const cls = diff<=1?"urgent":diff<=7?"soon":"";
-      return `<li><span class="dday ${cls}">${lab}</span><span class="tdate">${x.d.getMonth()+1}.${x.d.getDate()} (${W[x.d.getDay()]})</span><span class="ttxt"><i class="tk ${x.law?"law":"mine"}">${x.law?"신고기한":"내 할 일"}</i>${esc(x.t)}${x.m?`<span>${esc(x.m)}</span>`:""}</span></li>`;
-    }).join("")+`</ul></div>`;
+    .filter(x=>x.d&&x.t&&!x.done).sort((a,b)=>a.d-b.d);
+  const law=lawDeadlines(14).sort((a,b)=>a.d-b.d);
+  if(!mine.length&&!law.length){ box.innerHTML=""; return; }
+  const W="일월화수목금토";
+  const li=x=>{
+    const diff=Math.round((x.d-today)/86400000);
+    const lab = diff===0?"오늘":diff>0?`D-${diff}`:`${-diff}일 지남`;
+    const cls = diff<=1?"urgent":diff<=7?"soon":"";
+    return `<li><span class="dday ${cls}">${lab}</span><span class="tdate">${x.d.getMonth()+1}.${x.d.getDate()} (${W[x.d.getDay()]})</span><span class="ttxt">${esc(x.t)}${x.m?`<span>${esc(x.m)}</span>`:""}</span></li>`;
+  };
+  const col=(title,cls,list,hint,empty)=>`<div class="tcol ${cls}"><div class="todo-h">${title} <span class="n">${list.length}</span><small>${hint}</small></div><ul>${list.length?list.map(li).join(""):`<li class="tempty">${empty}</li>`}</ul></div>`;
+  box.innerHTML=`<div class="todo two">${col("📌 내 할 일","mine",mine,"시트 '할일' 탭 · 끝나면 완료 칸에 O","등록된 할 일이 없어요")}${col("🗓 다가오는 신고기한","law",law,"2주 안 · 주말이면 다음 월요일","2주 안에 신고기한이 없어요")}</div>`;
 }
 
 async function loadSheets(){
