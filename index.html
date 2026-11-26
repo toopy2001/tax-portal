@@ -114,6 +114,11 @@
   .ch-참고{background:var(--gray-soft);color:var(--mute)}
   .d-head{padding:20px 24px 16px;border-bottom:1px solid var(--line)}
   .d-head h2{margin:0;font-size:19px;letter-spacing:-.02em}
+  .d-head{position:relative}
+  .d-head h2{padding-right:64px}
+  .dcopy{position:absolute;top:18px;right:20px;padding:5px 10px;border:1px solid var(--line);background:#fff;color:var(--mute);border-radius:7px;font-family:inherit;font-weight:600;font-size:12px;cursor:pointer}
+  .dcopy:hover{color:var(--ink);border-color:var(--ink)}
+  .dcopy.ok{color:#0a7a45;border-color:#0a7a45}
   .d-head p{margin:4px 0 10px;color:var(--mute);font-size:13.5px}
   .d-head .m{display:flex;gap:5px;flex-wrap:wrap}
   .d-sec{padding:6px 24px 18px}
@@ -502,7 +507,7 @@
       </div>
     </div>
 
-    <footer>신고기한·절차는 일반적인 기준입니다. 기한이 주말·공휴일이면 다음 영업일로 연장되며, 사이트 메뉴 이름은 개편으로 바뀔 수 있습니다. 내용 수정은 구글 시트에서 합니다. · 화면 버전 2026-11-26d (할 일·신고기한은 첫 화면에만)</footer>
+    <footer>신고기한·절차는 일반적인 기준입니다. 기한이 주말·공휴일이면 다음 영업일로 연장되며, 사이트 메뉴 이름은 개편으로 바뀔 수 있습니다. 내용 수정은 구글 시트에서 합니다. · 화면 버전 2026-11-27 (절차 복사 버튼 · 시트 연결 실패 시 마지막 내용 표시)</footer>
   </main>
 </div>
 
@@ -718,12 +723,23 @@ function siteTag(name){
   if(!site) return "";
   return site.u ? `<a class="stag" href="${esc(site.u)}" ${ext}>${esc(site.n)}</a>` : `<span class="stag plain">${esc(site.n)}</span>`;
 }
+let CUR_PROC = null;
+function procText(p){   // 상세 화면을 그대로 텍스트로 (번호 순서 → 포함·제외 → 예외·주의·참고)
+  const line=s=>[s[0],s[1]].filter(Boolean).join(" · ")+(s[2]?" — "+s[2]:"");
+  const out=["["+p.n+"]"+(p.d?" "+p.d:"")];
+  p.steps.filter(x=>!x[3]).forEach((s,i)=>out.push((i+1)+". "+line(s)));
+  ["포함","제외"].forEach(l=>{ const r=p.steps.filter(x=>x[3]===l); if(r.length) out.push(l+": "+r.map(s=>s[1]).join(" · ")); });
+  const labs=[...LAB_ORDER.filter(l=>l!=="포함"&&l!=="제외"), ...new Set(p.steps.map(x=>x[3]).filter(l=>l&&!LAB_ORDER.includes(l)))];
+  labs.forEach(l=>p.steps.filter(x=>x[3]===l).forEach(s=>out.push((LAB_NAME[l]||l)+": "+line(s))));
+  return out.join("\n");
+}
 function renderProcs(q, SRC){
   SRC = SRC || [];
   const match=p=>!q||(p.n+p.d+p.steps.map(s=>s.join(" ")).join(" ")).toLowerCase().includes(q);
   const list=SRC.filter(match);
   if(!list.length) return "";
   let p = list.find(x=>x.n===sel[mode]) || list[0];
+  CUR_PROC = p;
   const items = list.map(x=>`<button class="mitem ${x===p?"on":""}" data-p="${esc(x.n)}">
       <div class="t">${esc(x.n)}</div>${x.d?`<div class="s">${esc(x.d)}</div>`:""}<div class="m">${chips(x)}</div></button>`).join("");
   const main=p.steps.filter(x=>!x[3]);
@@ -743,7 +759,7 @@ function renderProcs(q, SRC){
   }
   return `<div class="md">
     <div class="panel mlist"><div class="panel-h">목록 <span class="n">${list.length}</span></div>${items}</div>
-    <div class="panel detail" id="detail"><div class="d-head"><h2>${esc(p.n)}</h2>${p.d?`<p>${esc(p.d)}</p>`:""}</div>${body}</div>
+    <div class="panel detail" id="detail"><div class="d-head"><button class="dcopy" data-copy title="이 절차를 텍스트로 복사 (메모·메신저 붙여넣기용)">복사</button><h2>${esc(p.n)}</h2>${p.d?`<p>${esc(p.d)}</p>`:""}</div>${body}</div>
   </div>`;
 }
 
@@ -824,6 +840,14 @@ document.getElementById("list").addEventListener("click",e=>{
   if(xg){ if(xg.dataset.go==="sites"){ cat="전체"; store.set("taxCat",cat); } go(xg.dataset.go); return; }
   const st=e.target.closest(".star");
   if(st){ e.preventDefault(); const n=st.dataset.n; favs=favs.includes(n)?favs.filter(x=>x!==n):[...favs,n]; store.set("taxFavs",favs); render(); return; }
+  const cp=e.target.closest("[data-copy]");
+  if(cp&&CUR_PROC){
+    const txt=procText(CUR_PROC);
+    const done=ok=>{ cp.textContent=ok?"복사됨 ✓":"복사 실패"; cp.classList.toggle("ok",ok); setTimeout(()=>{ cp.textContent="복사"; cp.classList.remove("ok"); },1600); };
+    const fallback=()=>{ try{ const t=document.createElement("textarea"); t.value=txt; t.style.position="fixed"; t.style.opacity="0"; document.body.appendChild(t); t.select(); const ok=document.execCommand("copy"); t.remove(); done(ok); }catch(err){ done(false); } };
+    if(navigator.clipboard&&window.isSecureContext) navigator.clipboard.writeText(txt).then(()=>done(true),fallback); else fallback();
+    return;
+  }
   const it=e.target.closest(".mitem");
   if(it){
     sel[mode]=it.dataset.p; store.set("taxSel",sel); render();
@@ -1585,7 +1609,15 @@ function gvizJsonp(url){
     el.src=src; document.head.appendChild(el);
   });
 }
-let SYNC={ok:0,fail:0};
+let SYNC={ok:0,fail:0,cached:0};
+// 마지막으로 불러온 시트 내용을 이 브라우저에 보관 → 다음에 시트 연결이 안 되면 오래된 기본 목록 대신 이것을 표시
+const SHEET_CACHE="taxSheetCache";
+function cacheAll(){ try{ return JSON.parse(localStorage.getItem(SHEET_CACHE)||"{}")||{}; }catch(e){ return {}; } }
+function cachePut(k,rows){ try{ const c=cacheAll(); c[k]={t:Date.now(),rows}; localStorage.setItem(SHEET_CACHE,JSON.stringify(c)); }catch(e){} }
+async function fetchCached(url,key){
+  try{ const rows=await fetchCSV(url); if(rows.length) cachePut(key,rows); return rows; }
+  catch(e){ const c=cacheAll()[key]; if(c&&Array.isArray(c.rows)&&c.rows.length){ SYNC.cached=Math.max(SYNC.cached,c.t||0); return c.rows; } throw e; }
+}
 async function fetchCSV(url, quiet){
   try{
     const res=await fetch(url+(url.includes("?")?"&":"?")+"t="+Date.now(),{cache:"no-store"});
@@ -1601,7 +1633,9 @@ function showSync(){
   const el=document.getElementById("sync"); if(!el) return;
   const t=new Date(); const hm=String(t.getHours()).padStart(2,"0")+":"+String(t.getMinutes()).padStart(2,"0");
   el.textContent = SYNC.fail===0&&SYNC.ok>0 ? `🟢 구글 시트 연결됨 · ${hm}`
-    : SYNC.ok>0 ? `🟡 일부 탭만 연결됨 · ${hm}` : `🔴 시트 연결 안 됨 · 기본 목록 표시 중`;
+    : SYNC.ok>0 ? `🟡 일부 탭만 연결됨 · ${hm}`
+    : SYNC.cached ? (d=>`🟠 시트 연결 안 됨 · ${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}에 불러온 내용 표시 중`)(new Date(SYNC.cached))
+    : `🔴 시트 연결 안 됨 · 기본 목록 표시 중`;
 }
 
 function toProcs(rows){
@@ -1656,14 +1690,14 @@ function renderTodo(){
 
 async function loadSheets(){
   const jobs = [
-    fetchCSV(SHEET_CSV_URL).then(rows=>{
+    fetchCached(SHEET_CSV_URL,"sites").then(rows=>{
       const list=rows.map(r=>({c:r[0]||"",n:r[1]||"",u:r[2]||"",d:r[3]||"",t:(r[4]||"").split(/[,\/]/).map(x=>x.trim()).filter(Boolean)})).filter(s=>s.c&&s.n&&s.u);
       list.forEach(s=>{ if(!/^https?:\/\//.test(s.u)) s.u="https://"+s.u; });
       if(list.length){ SITES=list; refreshCats(); }
     }),
-    fetchCSV(PROC_CSV_URL).then(rows=>{ const l=toProcs(rows); if(l.length) PROCS=l; }),
-    fetchCSV(SAMU_CSV_URL).then(rows=>{ const l=toProcs(rows); if(l.length) SAMU=l; }),
-    fetchCSV(DOCS_CSV_URL).then(rows=>{ const l=toDocs(rows); if(l.length) DOCS=l; }),
+    fetchCached(PROC_CSV_URL,"procs").then(rows=>{ const l=toProcs(rows); if(l.length) PROCS=l; }),
+    fetchCached(SAMU_CSV_URL,"samu").then(rows=>{ const l=toProcs(rows); if(l.length) SAMU=l; }),
+    fetchCached(DOCS_CSV_URL,"docs").then(rows=>{ const l=toDocs(rows); if(l.length) DOCS=l; }),
   ];
   const res = await Promise.allSettled(jobs);
   res.forEach(r=>{ if(r.status==="rejected") console.warn("시트를 못 불러와 기본 목록을 씁니다.", r.reason); });
