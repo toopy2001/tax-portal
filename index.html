@@ -250,6 +250,9 @@
   .tdate{font-size:12.5px;color:var(--mute);font-variant-numeric:tabular-nums}
   .ttxt{font-weight:600;font-size:14px}
   .ttxt span{font-weight:400;color:var(--mute);font-size:12.5px;margin-left:6px}
+  .tk{display:inline-block;font-style:normal;font-size:11px;font-weight:700;padding:1px 7px;border-radius:5px;margin-right:6px;vertical-align:1px}
+  .tk.mine{background:var(--accent-soft);color:var(--accent)} .tk.law{background:var(--gray-soft);color:var(--mute)}
+  .todo-h .tk{margin:0 0 0 2px;font-weight:600}
   @media (max-width:900px){ .todo li{grid-template-columns:64px minmax(0,1fr)} .tdate{display:none} }
   /* 카드 분류 */
   .cardwrap{display:grid;grid-template-columns:340px minmax(0,1fr);gap:16px;align-items:start}
@@ -492,7 +495,7 @@
       </div>
     </div>
 
-    <footer>신고기한·절차는 일반적인 기준입니다. 기한이 주말·공휴일이면 다음 영업일로 연장되며, 사이트 메뉴 이름은 개편으로 바뀔 수 있습니다. 내용 수정은 구글 시트에서 합니다. · 화면 버전 2026-11-26 (검색 시 다른 메뉴 결과 개수)</footer>
+    <footer>신고기한·절차는 일반적인 기준입니다. 기한이 주말·공휴일이면 다음 영업일로 연장되며, 사이트 메뉴 이름은 개편으로 바뀔 수 있습니다. 내용 수정은 구글 시트에서 합니다. · 화면 버전 2026-11-26b (해야 할 일: 내 할 일 + 2주 안 신고기한)</footer>
   </main>
 </div>
 
@@ -1612,19 +1615,33 @@ function parseDay(t){
   const m=String(t||"").match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})/);
   return m ? new Date(+m[1], +m[2]-1, +m[3]) : null;
 }
+function lawDeadlines(days){   // 앞으로 days일 안의 신고기한 (토·일이면 다음 월요일 — 국세기본법 제5조①)
+  const now=new Date(), t0=new Date(now.getFullYear(),now.getMonth(),now.getDate()), out=[];
+  for(let k=0;k<2;k++){
+    const y=now.getFullYear()+(now.getMonth()+k>11?1:0), m=(now.getMonth()+k)%12+1;
+    (DEADLINES[m]||[]).forEach(x=>{
+      const g=/^(\d{1,2})\/(\d{1,2})\s*/.exec(x); if(!g) return;
+      const d=new Date(y,+g[1]-1,+g[2]); while(d.getDay()===0||d.getDay()===6) d.setDate(d.getDate()+1);
+      const diff=Math.round((d-t0)/86400000);
+      if(diff>=0&&diff<=days) out.push({d,t:x.slice(g[0].length),m:"",law:true});
+    });
+  }
+  return out;
+}
 function renderTodo(){
   const box=document.getElementById("todo");
   const today=new Date(); today.setHours(0,0,0,0);
-  const list=TODOS.map(r=>({d:parseDay(r[0]),t:r[1]||"",m:r[2]||"",done:/^(o|O|ㅇ|완료|v|V|✓|y|Y|TRUE)$/.test((r[3]||"").trim())}))
-    .filter(x=>x.d&&x.t&&!x.done).sort((a,b)=>a.d-b.d);
+  const mine=TODOS.map(r=>({d:parseDay(r[0]),t:r[1]||"",m:r[2]||"",done:/^(o|O|ㅇ|완료|v|V|✓|y|Y|TRUE)$/.test((r[3]||"").trim())}))
+    .filter(x=>x.d&&x.t&&!x.done);
+  const list=[...mine, ...lawDeadlines(14)].sort((a,b)=>(a.d-b.d)||(a.law-b.law));
   if(!list.length){ box.innerHTML=""; return; }
-  const W="일월화수목금토";
-  box.innerHTML=`<div class="todo"><div class="todo-h">📌 내 할 일 <span class="n">${list.length}</span><small>완료하면 시트 '할일' 탭 완료 칸에 O</small></div><ul>`+
+  const W="일월화수목금토", nMine=mine.length, nLaw=list.length-nMine;
+  box.innerHTML=`<div class="todo"><div class="todo-h">📌 해야 할 일 <span class="n">${list.length}</span><span class="tk mine">내 할 일 ${nMine}</span><span class="tk law">신고기한 ${nLaw}</span><small>내 할 일은 시트 '할일' 탭에서 추가 · 끝나면 완료 칸에 O</small></div><ul>`+
     list.map(x=>{
       const diff=Math.round((x.d-today)/86400000);
       const lab = diff===0?"오늘":diff>0?`D-${diff}`:`${-diff}일 지남`;
       const cls = diff<=1?"urgent":diff<=7?"soon":"";
-      return `<li><span class="dday ${cls}">${lab}</span><span class="tdate">${x.d.getMonth()+1}.${x.d.getDate()} (${W[x.d.getDay()]})</span><span class="ttxt">${esc(x.t)}${x.m?`<span>${esc(x.m)}</span>`:""}</span></li>`;
+      return `<li><span class="dday ${cls}">${lab}</span><span class="tdate">${x.d.getMonth()+1}.${x.d.getDate()} (${W[x.d.getDay()]})</span><span class="ttxt"><i class="tk ${x.law?"law":"mine"}">${x.law?"신고기한":"내 할 일"}</i>${esc(x.t)}${x.m?`<span>${esc(x.m)}</span>`:""}</span></li>`;
     }).join("")+`</ul></div>`;
 }
 
